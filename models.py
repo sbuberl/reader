@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import declared_attr
 
 db = SQLAlchemy()
 
@@ -22,6 +23,11 @@ class Document(db.Model):
     author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
+
+    @declared_attr
+    def cover_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('files.id'))
+
 class Comic(Document):
     __tablename__ = "comics"
     series = db.Column(db.String)

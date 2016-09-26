@@ -7,5 +7,10 @@
   </style>
 {% endblock %}
 {% block content %}
-  <h1>Index Page</h1>
+  <h1>Library</h1>
+  {% for comic in comics %}
+    <li> <img src="{{ comic.path }}" />{{ comic.series }} {{ comic.issue }}
+  {% else %}
+    <li><em>Nothing found in your library</em>
+  {% endfor %}
 {% endblock %}

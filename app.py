@@ -3,11 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 import imghdr
 from models import db, FileType, File, ComicPage, Comic
 import os
+from PIL import Image
 import re
 from zipfile import ZipFile
 
 dbName = 'test.db'
-UPLOAD_FOLDER = 'uploads'
+DATA_FOLDER = "data"
+UPLOAD_FOLDER = os.path.join(DATA_FOLDER, 'uploads')
+THUMBNAILS = os.path.join(DATA_FOLDER, 'thumbnails')
 ALLOWED_EXTENSIONS = set(['.cbr', '.cbz', '.epub'])
 
 app = Flask(__name__)
@@ -18,6 +21,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 if not os.path.isdir(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+if not os.path.isdir(THUMBNAILS):
+    os.makedirs(THUMBNAILS)
 
 
 def add_and_refresh(object):
@@ -30,13 +35,31 @@ def path_leaf(path):
     head, tail = os.path.split(path)
     return tail or os.path.basename(head)
 
+
+def make_cover_thumbnail(cover_name, cover_path, book_name, image_type):
+    cover_extension = os.path.splitext(cover_name)[1]
+    thumbnail_name = 'cover_{0}{1}'.format(book_name, cover_extension)
+    thumbnail_path = os.path.join(THUMBNAILS, thumbnail_name)
+    if os.path.exists(thumbnail_path):
+        os.remove(thumbnail_path)
+    im = Image.open(cover_path)
+    im.thumbnail((200, 200))
+    im.save(thumbnail_path)
+    thumbnail = File(name=cover_name, path=thumbnail_path, size=os.path.getsize(thumbnail_path), type=image_type)
+    add_and_refresh(thumbnail)
+    return thumbnail
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    comics = db.session.query(Comic, File.path).filter(Comic.cover_id == File.id).all()
+    return render_template('index.html', comics=comics)
+
 
 def allowed_file(filename):
     return '.' in filename and \
        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
@@ -72,6 +95,10 @@ def upload_file():
                                 add_and_refresh(page)
                                 page_number += 1
                                 comic.add_page(page)
+                        first_page = zip_list[0].filename
+                        first_page_path = os.path.join(extracted_path, first_page)
+                        cover = make_cover_thumbnail(first_page, first_page_path, basename, image_type.id)
+                        comic.cover_id = cover.id
                     db.session.commit()
                 return redirect(url_for('index'))
     return render_template('upload.html')
