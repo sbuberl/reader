@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+import imghdr
 from models import db, FileType, File, ComicPage, Comic
 import os
-import zipfile
-import imghdr
+import re
+from zipfile import ZipFile
 
 dbName = 'test.db'
 UPLOAD_FOLDER = 'uploads'
@@ -17,6 +18,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 if not os.path.isdir(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+
+def add_and_refresh(object):
+    db.session.add(object)
+    db.session.flush()
+    db.session.refresh(object)
+
 
 def path_leaf(path):
     head, tail = os.path.split(path)
@@ -36,28 +44,38 @@ def upload_file():
         file = request.files['file']
         if file:
             filename = file.filename
-            zipFilePath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(zipFilePath)
+            uploaded_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(uploaded_file_path)
             basename, extension = os.path.splitext(filename)
             if extension in ALLOWED_EXTENSIONS:
-                extractedPath = os.path.join(app.config['UPLOAD_FOLDER'], basename)
+                extracted_path = os.path.join(app.config['UPLOAD_FOLDER'], basename)
                 if extension == '.cbz':
-                    comic = Comic()
-                    imageType = FileType.query.filter_by(category='image').first()
-                    with zipfile.ZipFile(zipFilePath) as zip:
-                        for zipinfo in zip.infolist():
-                            pagePath = zip.extract(zipinfo.filename, extractedPath)
-                            pageType = imghdr.what(pagePath)
-                            if pageType is not None:
-                                pageFileName = path_leaf(zipinfo.filename)
-                                pagePath = os.path.join(extractedPath, zipinfo.filename)
-                                pageFile = File(name=pageFileName, path=pagePath, size=zipinfo.file_size, type=imageType)
-                                page = ComicPage(file_id=pageFile.id)
+                    comic = Comic(name=basename)
+                    match = re.match("(.+?)\s+(\d+)\.", filename)
+                    if match:
+                        comic.series = match.group(1)
+                        comic.issue = match.group(2)
+                    add_and_refresh(comic)
+                    image_type = FileType.query.filter_by(category='image').first()
+                    with ZipFile(uploaded_file_path) as zip:
+                        zip_list = zip.infolist()
+                        page_number = 1
+                        for zipinfo in zip_list:
+                            page_path = zip.extract(zipinfo.filename, extracted_path)
+                            page_type = imghdr.what(page_path)
+                            if page_type:
+                                page_file_name = path_leaf(zipinfo.filename)
+                                page_path = os.path.join(extracted_path, zipinfo.filename)
+                                page_file = File(name=page_file_name, path=page_path, size=zipinfo.file_size, type=image_type.id)
+                                add_and_refresh(page_file)
+                                page = ComicPage(page_number=page_number, comic_id=comic.id, file_id=page_file.id)
+                                add_and_refresh(page)
+                                page_number += 1
                                 comic.add_page(page)
-                    db.session.add(comic)
                     db.session.commit()
                 return redirect(url_for('index'))
     return render_template('upload.html')
+
 
 if __name__ == '__main__':
     db.init_app(app)

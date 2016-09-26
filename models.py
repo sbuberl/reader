@@ -15,15 +15,19 @@ class FileType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     category = db.Column(db.String)
 
-class Comic(db.Model):
-    __tablename__ = "comics"
+class Document(db.Model):
+    __abstract__ = True
     id = db.Column(db.Integer, primary_key=True)
-    series = db.Column(db.String)
-    issue = db.Column(db.Integer)
+    name = db.Column(db.String)
+    author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
-    pages = db.relationship('ComicPage', backref='pages_ref',
-                                lazy='dynamic')
+class Comic(Document):
+    __tablename__ = "comics"
+    series = db.Column(db.String)
+    issue = db.Column(db.Integer)
+    pages = db.relationship("ComicPage", back_populates="comic")
+    db.UniqueConstraint('series', 'issue')
 
     def add_page(self, page):
         self.pages.append(page)
@@ -31,13 +35,14 @@ class Comic(db.Model):
 class ComicPage(db.Model):
     __tablename__ = "comic_pages"
     id = db.Column(db.Integer, primary_key=True)
+    page_number = db.Column(db.Integer)
     comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'))
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
+    comic = db.relationship("Comic", back_populates="pages")
 
-class Book(db.Model):
+    db.UniqueConstraint('comic_id', 'page_number')
+
+class Book(Document):
     __tablename__ = "books"
-    id = db.Column(db.Integer, primary_key=True)
-    book = db.Column(db.String)
-    author = db.Column(db.String)
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
 
