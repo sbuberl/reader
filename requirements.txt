@@ -1,2 +1,3 @@
-flask
-pillow
+Flask
+Flask-SQLAlchemy
+Pillow
