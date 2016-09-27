@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
 import imghdr
 from models import db, FileType, File, ComicPage, Comic
@@ -56,7 +56,7 @@ def make_cover_thumbnail(cover_name, cover_path, book_name, image_type):
 
 @app.route('/')
 def index():
-    comics = db.session.query(Comic, File.path).filter(Comic.cover_id == File.id).all()
+    comics = db.session.query(Comic).all()
     return render_template('index.html', comics=comics)
 
 
@@ -65,17 +65,23 @@ def allowed_file(filename):
        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
+@app.route('/cover/<int:cover_id>')
+def get_cover(cover_id):
+    cover = File.query.join(Comic, Comic.cover_id == File.id).filter(File.id == cover_id).one()
+    return send_file(cover.path)
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
         file = request.files['file']
         if file:
             filename = file.filename
-            uploaded_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            uploaded_file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(uploaded_file_path)
             basename, extension = os.path.splitext(filename)
             if extension in ALLOWED_EXTENSIONS:
-                extracted_path = os.path.join(app.config['UPLOAD_FOLDER'], basename)
+                extracted_path = os.path.join(LIBRARY_FOLDER, basename)
                 if extension == '.cbz':
                     comic = Comic(name=basename)
                     match = re.match("(.+?)\s+(\d+)\.", filename)

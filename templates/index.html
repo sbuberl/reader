@@ -7,10 +7,36 @@
   </style>
 {% endblock %}
 {% block content %}
-  <h1>Library</h1>
-  {% for comic in comics %}
-    <li> <img src="{{ comic.path }}" />{{ comic.series }} {{ comic.issue }}
-  {% else %}
-    <li><em>Nothing found in your library</em>
-  {% endfor %}
+
+     <!-- Page Content -->
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-lg-12">
+                <h1 class="page-header">Library</h1>
+            </div>
+        </div>
+
+        {% for comic_row in comics | batch(4, '&nbsp;') %}
+            <div class="row">
+                {% for comic in comic_row %}
+                    {% if comic.name %}
+                        <div class="col-lg-3 col-md-3 col-xs-3">
+                            <a class="thumbnail" href="/read/{{ comic.id }}">
+                                <img class="img-responsive" src="/cover/{{ comic.cover_id }}" alt="">
+                                <p style="text-align: center">{{ comic.name }}</p>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-lg-12">
+                    <em>Nothing found in your library</em>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}
