@@ -8,8 +8,10 @@ import re
 from zipfile import ZipFile
 
 dbName = 'test.db'
-DATA_FOLDER = "data"
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+DATA_FOLDER =  os.path.join(PROJECT_ROOT, "data")
 UPLOAD_FOLDER = os.path.join(DATA_FOLDER, 'uploads')
+LIBRARY_FOLDER = os.path.join(DATA_FOLDER, 'library')
 THUMBNAILS = os.path.join(DATA_FOLDER, 'thumbnails')
 ALLOWED_EXTENSIONS = set(['.cbr', '.cbz', '.epub'])
 
@@ -21,6 +23,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 if not os.path.isdir(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+if not os.path.isdir(LIBRARY_FOLDER):
+    os.makedirs(LIBRARY_FOLDER)
 if not os.path.isdir(THUMBNAILS):
     os.makedirs(THUMBNAILS)
 
@@ -38,7 +42,7 @@ def path_leaf(path):
 
 def make_cover_thumbnail(cover_name, cover_path, book_name, image_type):
     cover_extension = os.path.splitext(cover_name)[1]
-    thumbnail_name = 'cover_{0}{1}'.format(book_name, cover_extension)
+    thumbnail_name = '{0}{1}'.format(book_name, cover_extension)
     thumbnail_path = os.path.join(THUMBNAILS, thumbnail_name)
     if os.path.exists(thumbnail_path):
         os.remove(thumbnail_path)
@@ -113,4 +117,4 @@ if __name__ == '__main__':
             db.session.add(FileType(category='epub'))
             db.session.add(FileType(category='image'))
             db.session.commit()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
