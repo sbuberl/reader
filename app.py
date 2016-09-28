@@ -65,10 +65,16 @@ def allowed_file(filename):
        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/cover/<int:cover_id>')
-def get_cover(cover_id):
-    cover = File.query.join(Comic, Comic.cover_id == File.id).filter(File.id == cover_id).one()
-    return send_file(cover.path)
+@app.route('/file/<int:file_id>')
+def get_file(file_id):
+    file = File.query.filter_by(id = file_id).one()
+    return send_file(file.path)
+
+
+@app.route('/read/comic/<int:comic_id>')
+def read_comic(comic_id):
+    comic = Comic.query.filter_by(id = comic_id).one()
+    return render_template('read_comic.html', comic=comic)
 
 
 @app.route('/upload', methods=['GET', 'POST'])

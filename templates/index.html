@@ -23,8 +23,8 @@
                 {% for comic in comic_row %}
                     {% if comic.name %}
                         <div class="col-lg-3 col-md-3 col-xs-3">
-                            <a class="thumbnail" href="/read/{{ comic.id }}">
-                                <img class="img-responsive" src="/cover/{{ comic.cover_id }}" alt="">
+                            <a class="thumbnail" href="/read/comic/{{ comic.id }}">
+                                <img class="img-responsive" src="/file/{{ comic.cover_id }}" alt="">
                                 <p style="text-align: center">{{ comic.name }}</p>
                             </a>
                         </div>
