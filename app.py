@@ -77,6 +77,12 @@ def read_comic(comic_id):
     return render_template('read_comic.html', comic=comic)
 
 
+@app.route('/comic/<int:comic_id>/page/<int:page_number>')
+def get_comic_page(comic_id, page_number):
+    page = ComicPage.query.filter(ComicPage.comic_id == comic_id).filter(ComicPage.page_number == page_number).one()
+    return get_file(page.file_id)
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':

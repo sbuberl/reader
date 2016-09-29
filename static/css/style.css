@@ -1,2 +1,20 @@
+.fit {
+  height: 100vh;
+}
 
-.carousel-indicators li { visibility: hidden; }
+.fitHorizontal {
+    height: auto;
+    width: 100%;
+}
+
+.fitVertical {
+    height: 100%;
+    width: auto;
+}
+
+.fitBoth {
+    width: auto;
+    height: auto;
+    max-height: 100%;
+}
+

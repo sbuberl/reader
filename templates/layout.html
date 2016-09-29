@@ -10,7 +10,7 @@
     <title>{% block title %}{% endblock %} - Reader</title>
     {% endblock %}
   </head>
-  <body>
+  <body {% block onload %}{% endblock %}>
     <div id="content">{% block content %}{% endblock %}</div>
     <div id="footer">
       {% block footer %}
