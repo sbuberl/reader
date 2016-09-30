@@ -1,54 +1,61 @@
 
-function displayPage(comic_id, page) {
-    $("#pageImage img").attr("src", "/comic/" + comic_id + "/page/" + page);
+var page = 1;
+var pageCount;
+var comicId;
+
+function isTouchDevice() {
+  return 'ontouchstart' in window        // works on most browsers
+      || navigator.maxTouchPoints;       // works on IE10/11 and Surface
 }
 
-function prevPage(page) {
-  $("#pageImage").removeClass();
-  $("#pageImage img").removeClass();
-  $("#pageImage img").addClass('fitHorizontal');
+function displayPage() {
+    $("#page").attr("src", "/comic/" + comicId + "/page/" + page);
 }
 
-function nextPage(page) {
-  $("#pageImage").removeClass();
-  $("#pageImage img").removeClass();
-  $("#pageImage img").addClass('fitHorizontal');
+function prevPage() {
+    if (page > 1) {
+        page -= 1;
+        displayPage(comicId);
+    }
+}
+
+function nextPage() {
+    if (page < pageCount) {
+        page += 1;
+        displayPage(comicId);
+    }
 }
 
 function fitHorizontal() {
-  $("#pageImage").removeClass();
-  $("#pageImage img").removeClass();
-  $("#pageImage img").addClass('fitHorizontal');
+  $("#pageHolder").removeClass();
+  $("#page").removeClass();
+  $("#page").addClass('fitHorizontal');
 }
 
 function fitVertical() {
-  $("#pageImage img").removeClass();
-  $("#pageImage img").addClass('fitVertical');
-  $("#pageImage").addClass('fit');
+  $("#page").removeClass();
+  $("#page").addClass('fitVertical');
+  $("#pageHolder").addClass('fit');
 
 }
 function fitBoth() {
-  $("#pageImage img").removeClass();
-  $("#pageImage img").addClass('fitBoth');
-  $("#pageImage").addClass('fit');
+  $("#page").removeClass();
+  $("#page").addClass('fitBoth');
+  $("#pageHolder").addClass('fit');
 }
 
-function readComic(comic_id, pageCount) {
-    var page = 1;
+function readComic(comic, pages) {
+    comicId = comic;
+    pageCount = pages;
+    $("#prevPanel").on("click", prevPage);
+    $("#nextPanel").on("click", nextPage);
 
-    $("#prevPanel").on("click", function() {
-        if (page > 1) {
-            page -= 1;
-            displayPage(comic_id, page);
-        }
-    });
-
-    $("#nextPanel").on("click", function() {
-        if (page < pageCount) {
-            page += 1;
-            displayPage(comic_id, page);
-        }
-    });
+    if(isTouchDevice()) {
+        $('#page')
+          .swipeEvents()
+          .bind("swipeLeft",  prevPage)
+          .bind("swipeRight", nextPage);
+    }
 
     $("#fitVertical").on("click",fitVertical);
     $("#fitHorizontal").on("click",fitHorizontal);
