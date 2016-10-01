@@ -5,6 +5,7 @@ import os
 from PIL import Image
 from rarfile import RarFile
 import re
+from tarfile import TarFile
 from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
 
@@ -24,6 +25,15 @@ class BaseHandler:
 
 
 class ComicHandler(BaseHandler):
+    def _get_info_filename(self, info):
+        return info.filename
+
+    def _get_info_size(self, info):
+        return info.file_size
+
+    def _get_info_list(self, archive):
+        return archive.infolist()
+
     def handle_file(self, name, comic_file_path):
         comic = Comic(name=name)
         match = re.match("(.+?)\s+(\d+)\.", comic_file_path)
@@ -35,46 +45,66 @@ class ComicHandler(BaseHandler):
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self.extract_file(comic, comic_file_path, extracted_path, image_type)
 
-
-class CbrCbzBaseHandler(ComicHandler):
-    def extract_archve_info(self, archive, comic, extracted_path, image_type):
+    def _extract_archve_info(self, archive, comic, extracted_path, image_type):
         page_number = 1
-        info_list = archive.infolist()
-        is_rar = isinstance(archive, RarFile)
+        info_list = self._get_info_list(archive)
+        is_zip = isinstance(archive, ZipFile)
         for info in info_list:
-            info_file_name = info.filename
+            info_file_name = self._get_info_filename(info)
             info_head = os.path.split(info_file_name)[0]
             if info_head:
                 extracted_sub_dir = os.path.join(extracted_path, info_head)
                 if not os.path.isdir(extracted_sub_dir):
                     os.makedirs(extracted_sub_dir)
             page_path = os.path.join(extracted_path, info_file_name)
-            if is_rar and info.isdir():
+            if not is_zip and info.isdir():
                 continue
             archive.extract(info_file_name, extracted_path)
             page_type = imghdr.what(page_path)
             if page_type:
                 page_file_name = path_leaf(info_file_name)
-                page_path = os.path.join(extracted_path, info.filename)
-                page_file = File(name=page_file_name, path=page_path, size=info.file_size, type=image_type.id)
+                page_path = os.path.join(extracted_path, info_file_name)
+                page_size = self._get_info_size(info)
+                page_file = File(name=page_file_name, path=page_path, size=page_size, type=image_type.id)
                 add_and_refresh(page_file)
                 page = ComicPage(page_number=page_number, comic_id=comic.id, file_id=page_file.id)
                 page_number += 1
                 add_and_refresh(page)
-        first_page = info_list[0].filename
+        first_page_index = 0
+        first_page = self._get_info_filename(info_list[first_page_index])
+        while not is_zip and info_list[first_page_index].isdir():
+            first_page_index += 1
+            first_page = self._get_info_filename(info_list[first_page_index])
         first_page_path = os.path.join(extracted_path, first_page)
         cover = self.make_cover_thumbnail(first_page, first_page_path, comic.name, image_type.id)
         comic.cover_id = cover.id
 
-class CbzHandler(CbrCbzBaseHandler):
+
+class CbzHandler(ComicHandler):
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
         with ZipFile(comic_file_path) as zip:
-            self.extract_archve_info(zip, comic, extracted_path, image_type)
+            self._extract_archve_info(zip, comic, extracted_path, image_type)
 
-class CbrHandler(CbrCbzBaseHandler):
+
+class CbrHandler(ComicHandler):
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
         with RarFile(comic_file_path) as rar:
-            self.extract_archve_info(rar, comic, extracted_path, image_type)
+            self._extract_archve_info(rar, comic, extracted_path, image_type)
+
+
+class CbtHandler(ComicHandler):
+    def _get_info_filename(self, info):
+        return info.name
+
+    def _get_info_size(self, info):
+        return info.size
+
+    def _get_info_list(self, archive):
+        return archive.getmembers()
+
+    def extract_file(self, comic, comic_file_path, extracted_path, image_type):
+        with TarFile(comic_file_path) as tar:
+            self._extract_archve_info(tar, comic, extracted_path, image_type)
 
 
 

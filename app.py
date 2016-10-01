@@ -1,6 +1,6 @@
 from constants import *
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from handlers import CbzHandler, CbrHandler
+from handlers import CbzHandler, CbrHandler, CbtHandler
 from models import db, FileType, File, ComicPage, Comic
 import os
 
@@ -64,6 +64,8 @@ def upload_file():
                         handler = CbzHandler()
                     elif extension == '.cbr':
                         handler = CbrHandler()
+                    elif extension == '.cbt':
+                        handler = CbtHandler()
                     handler.handle_file(basename, uploaded_file_path)
                     db.session.commit()
                 return redirect(url_for('index'))
