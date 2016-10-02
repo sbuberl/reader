@@ -18,14 +18,18 @@
             </div>
         </div>
 
-        {% for comic_row in comics | batch(4, '&nbsp;') %}
+        {% for doc_row in documents | batch(4, '&nbsp;') %}
             <div class="row">
-                {% for comic in comic_row %}
-                    {% if comic.name %}
+                {% for document in doc_row %}
+                    {% if document.name %}
                         <div class="col-lg-3 col-md-3 col-xs-3">
-                            <a class="thumbnail" href="/read/comic/{{ comic.id }}">
-                                <img class="img-responsive" src="/file/{{ comic.cover_id }}" alt="">
-                                <p style="text-align: center">{{ comic.name }}</p>
+                            <a class="thumbnail" href="/read/{{ document.category }}/{{ document.id }}">
+                            {% if document.cover_id %}
+                                <img class="img-responsive" src="/file/{{ document.cover_id }}" alt="">
+                            {% else %}
+                                <img class="img-responsive" src="{{ url_for('static', filename='images/no_cover.jpg') }}" alt="">
+                            {% endif %}
+                                <p style="text-align: center">{{ document.name }}</p>
                             </a>
                         </div>
                     {% endif %}

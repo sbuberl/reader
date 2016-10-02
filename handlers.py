@@ -1,10 +1,11 @@
 from constants import LIBRARY_FOLDER, THUMBNAILS
 import imghdr
-from models import Comic, ComicPage, File, FileType
+from models import Comic, ComicPage, File, FileType, Book, DocumentType
 import os
 from PIL import Image
 from rarfile import RarFile
 import re
+from shutil import copyfile
 from tarfile import TarFile
 from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
@@ -35,13 +36,14 @@ class ComicHandler(BaseHandler):
         return archive.infolist()
 
     def handle_file(self, name, comic_file_path):
-        comic = Comic(name=name)
+        comic_doc = DocumentType.query.filter_by(category='comic').one()
+        comic = Comic(name=name, type=comic_doc.id)
         match = re.match("(.+?)\s+(\d+)\.", comic_file_path)
         if match:
             comic.series = match.group(1)
             comic.issue = match.group(2)
         add_and_refresh(comic)
-        image_type = FileType.query.filter_by(category='image').first()
+        image_type = FileType.query.filter_by(category='image').one()
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self.extract_file(comic, comic_file_path, extracted_path, image_type)
 
@@ -106,7 +108,18 @@ class CbtHandler(ComicHandler):
         with TarFile(comic_file_path) as tar:
             self._extract_archve_info(tar, comic, extracted_path, image_type)
 
-
+class PdfHandler(BaseHandler):
+    def handle_file(self, name, pdf_file_path):
+        pdf_library_path = os.path.join(LIBRARY_FOLDER, name + '.pdf')
+        copyfile(pdf_file_path, pdf_library_path)
+        file_name = path_leaf(pdf_library_path)
+        pdf_doc_type = DocumentType.query.filter_by(category='pdf').one()
+        pdf_file_type = FileType.query.filter_by(category='pdf').one()
+        size = os.path.getsize(pdf_library_path)
+        file = File(name=file_name, path=pdf_library_path, size=size, type=pdf_file_type.id)
+        add_and_refresh(file)
+        book = Book(name=name, file_id=file.id, type=pdf_doc_type.id)
+        add_and_refresh(book)
 
 
 

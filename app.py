@@ -1,7 +1,7 @@
 from constants import *
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from handlers import CbzHandler, CbrHandler, CbtHandler
-from models import db, FileType, File, ComicPage, Comic
+from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler
+from models import db, FileType, File, ComicPage, Comic, Document, DocumentType, Book
 import os
 
 dbName = 'test.db'
@@ -19,35 +19,32 @@ if not os.path.isdir(LIBRARY_FOLDER):
 if not os.path.isdir(THUMBNAILS):
     os.makedirs(THUMBNAILS)
 
-
 @app.route('/')
 def index():
-    comics = db.session.query(Comic).all()
-    return render_template('index.html', comics=comics)
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-       filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
+    comics = db.session.query(Comic.id, Comic.name, DocumentType.category, Comic.cover_id).join(DocumentType)
+    books = db.session.query(Book.id, Book.name, DocumentType.category, Book.cover_id).join(DocumentType)
+    docs = comics.union(books).all()
+    return render_template('index.html', documents=docs)
 
 @app.route('/file/<int:file_id>')
 def get_file(file_id):
     file = File.query.filter_by(id = file_id).one()
     return send_file(file.path)
 
-
 @app.route('/read/comic/<int:comic_id>')
 def read_comic(comic_id):
     comic = Comic.query.filter_by(id = comic_id).one()
     return render_template('read_comic.html', comic=comic)
 
+@app.route('/read/pdf/<int:book_id>')
+def read_pdf(book_id):
+    book = Book.query.filter_by(id = book_id).one()
+    return render_template('read_pdf.html', file_id=book.file_id)
 
 @app.route('/comic/<int:comic_id>/page/<int:page_number>')
 def get_comic_page(comic_id, page_number):
     page = ComicPage.query.filter(ComicPage.comic_id == comic_id).filter(ComicPage.page_number == page_number).one()
     return get_file(page.file_id)
-
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
@@ -66,19 +63,24 @@ def upload_file():
                         handler = CbrHandler()
                     elif extension == '.cbt':
                         handler = CbtHandler()
-                    handler.handle_file(basename, uploaded_file_path)
-                    db.session.commit()
+                elif extension == '.pdf':
+                    handler = PdfHandler()
+                handler.handle_file(basename, uploaded_file_path)
+                db.session.commit()
                 return redirect(url_for('index'))
     return render_template('upload.html')
-
 
 if __name__ == '__main__':
     db.init_app(app)
     if not os.path.isfile(dbName):
         with app.app_context():
             db.create_all()
+            db.session.add(DocumentType(category='comic'))
+            db.session.add(DocumentType(category='epub'))
+            db.session.add(DocumentType(category='pdf'))
             db.session.add(FileType(category='comic'))
             db.session.add(FileType(category='epub'))
             db.session.add(FileType(category='image'))
+            db.session.add(FileType(category='pdf'))
             db.session.commit()
     app.run(host='0.0.0.0', debug=True)
