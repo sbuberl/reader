@@ -1,15 +1,15 @@
 from constants import *
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler
-from models import db, FileType, File, ComicPage, Comic, Document, DocumentType, Book
+from models import db, FileType, File, ComicPage, Comic, DocumentType, Book
 import os
 
-dbName = 'test.db'
+db_name = os.path.join(CURRENT_PATH, 'test.db')
 
 app = Flask(__name__)
 app.secret_key = '\x1f\x14E\x95\xd86\xb2\x08\xa5\xe4\x8a\xcf\xd8f\xb8\xfdS<\xa3\xc2\x00\x1d\x99\xca`\xcc_6\xee\xa3\xd0;'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + dbName
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 if not os.path.isdir(UPLOAD_FOLDER):
@@ -72,7 +72,7 @@ def upload_file():
 
 if __name__ == '__main__':
     db.init_app(app)
-    if not os.path.isfile(dbName):
+    if not os.path.isfile(db_name):
         with app.app_context():
             db.create_all()
             db.session.add(DocumentType(category='comic'))
