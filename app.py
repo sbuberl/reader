@@ -2,6 +2,7 @@ from constants import *
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler
 from models import db, FileType, File, ComicPage, Comic, DocumentType, Book
+from models import db, FileType, File, ComicPage, Comic, DocumentType, Pdf
 import os
 
 db_name = os.path.join(CURRENT_PATH, 'test.db')
@@ -22,8 +23,8 @@ if not os.path.isdir(THUMBNAILS):
 @app.route('/')
 def index():
     comics = db.session.query(Comic.id, Comic.name, DocumentType.category, Comic.cover_id).join(DocumentType)
-    books = db.session.query(Book.id, Book.name, DocumentType.category, Book.cover_id).join(DocumentType)
-    docs = comics.union(books).all()
+    pdfs = db.session.query(Pdf.id, Pdf.name, DocumentType.category, Pdf.cover_id).join(DocumentType)
+    docs = comics.union(pdfs).all()
     return render_template('index.html', documents=docs)
 
 @app.route('/file/<int:file_id>')
@@ -38,7 +39,7 @@ def read_comic(comic_id):
 
 @app.route('/read/pdf/<int:book_id>')
 def read_pdf(book_id):
-    book = Book.query.filter_by(id = book_id).one()
+    book = Pdf.query.filter_by(id = book_id).one()
     return render_template('read_pdf.html', file_id=book.file_id)
 
 @app.route('/comic/<int:comic_id>/page/<int:page_number>')

@@ -6,28 +6,28 @@ db = SQLAlchemy()
 class File(db.Model):
     __tablename__ = "files"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    path = db.Column(db.String)
-    size = db.Column(db.Integer)
-    type = db.Column(db.Integer, db.ForeignKey('file_types.id'))
+    name = db.Column(db.String, nullable=False)
+    path = db.Column(db.String, nullable=False)
+    size = db.Column(db.Integer, nullable=False)
+    type = db.Column(db.Integer, db.ForeignKey('file_types.id'), nullable=False)
 
 
 class FileType(db.Model):
     __tablename__ = "file_types"
     id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String)
+    category = db.Column(db.String, nullable=False)
 
 
 class DocumentType(db.Model):
     __tablename__ = "doc_types"
     id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String)
+    category = db.Column(db.String, nullable=False)
 
 
 class Document(db.Model):
     __abstract__ = True
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
     author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
@@ -38,7 +38,11 @@ class Document(db.Model):
 
     @declared_attr
     def type(cls):
-        return db.Column(db.Integer, db.ForeignKey('doc_types.id'))
+        return db.Column(db.Integer, db.ForeignKey('doc_types.id'), nullable=False)
+
+    @declared_attr
+    def file_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
 
 
 class Comic(Document):
@@ -55,15 +59,18 @@ class Comic(Document):
 class ComicPage(db.Model):
     __tablename__ = "comic_pages"
     id = db.Column(db.Integer, primary_key=True)
-    page_number = db.Column(db.Integer)
-    comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'))
-    file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
+    page_number = db.Column(db.Integer, nullable=False)
+    comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'), nullable=False)
+    file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
     comic = db.relationship("Comic", back_populates="pages")
 
     db.UniqueConstraint('comic_id', 'page_number')
 
 
-class Book(Document):
-    __tablename__ = "books"
-    file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
+class Epub(Document):
+    __tablename__ = "epubs"
+
+
+class Pdf(Document):
+    __tablename__ = "pdf"
 

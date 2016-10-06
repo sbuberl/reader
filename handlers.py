@@ -1,6 +1,6 @@
 from constants import LIBRARY_FOLDER, THUMBNAILS
 import imghdr
-from models import Comic, ComicPage, File, FileType, Book, DocumentType
+from models import Comic, ComicPage, File, FileType, DocumentType, Pdf
 import os
 from PIL import Image
 from rarfile import RarFile
@@ -24,6 +24,16 @@ class BaseHandler:
         add_and_refresh(thumbnail)
         return thumbnail
 
+    def save_original_file(self, uploaded_file, type_value):
+        file_name = path_leaf(uploaded_file)
+        library_path = os.path.join(LIBRARY_FOLDER, file_name)
+        copyfile(uploaded_file, library_path)
+        file_type = FileType.query.filter_by(category=type_value).one()
+        size = os.path.getsize(library_path)
+        new_file = File(name=file_name, path=library_path, size=size, type=file_type.id)
+        add_and_refresh(new_file)
+        return new_file
+
 
 class ComicHandler(BaseHandler):
     def _get_info_filename(self, info):
@@ -37,7 +47,8 @@ class ComicHandler(BaseHandler):
 
     def handle_file(self, name, comic_file_path):
         comic_doc = DocumentType.query.filter_by(category='comic').one()
-        comic = Comic(name=name, type=comic_doc.id)
+        comic_file = self.save_original_file(comic_file_path, 'comic')
+        comic = Comic(name=name, type=comic_doc.id, file_id=comic_file.id)
         match = re.match("(.+?)\s+(\d+)\.", comic_file_path)
         if match:
             comic.series = match.group(1)
@@ -110,16 +121,10 @@ class CbtHandler(ComicHandler):
 
 class PdfHandler(BaseHandler):
     def handle_file(self, name, pdf_file_path):
-        pdf_library_path = os.path.join(LIBRARY_FOLDER, name + '.pdf')
-        copyfile(pdf_file_path, pdf_library_path)
-        file_name = path_leaf(pdf_library_path)
-        pdf_doc_type = DocumentType.query.filter_by(category='pdf').one()
-        pdf_file_type = FileType.query.filter_by(category='pdf').one()
-        size = os.path.getsize(pdf_library_path)
-        file = File(name=file_name, path=pdf_library_path, size=size, type=pdf_file_type.id)
-        add_and_refresh(file)
-        book = Book(name=name, file_id=file.id, type=pdf_doc_type.id)
-        add_and_refresh(book)
+        pdf_file = self.save_original_file(pdf_file_path, 'pdf')
+        pdf_doc = DocumentType.query.filter_by(category='pdf').one()
+        pdf = Pdf(name=name, file_id=pdf_file.id, type=pdf_doc.id)
+        add_and_refresh(pdf)
 
 
 
