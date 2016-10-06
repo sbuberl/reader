@@ -1,8 +1,7 @@
 from constants import *
-from flask import Flask, render_template, request, redirect, url_for, send_file
-from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler
-from models import db, FileType, File, ComicPage, Comic, DocumentType, Book
-from models import db, FileType, File, ComicPage, Comic, DocumentType, Pdf
+from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory
+from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
+from models import db, FileType, File, ComicPage, Comic, DocumentType, Pdf, Epub
 import os
 
 db_name = os.path.join(CURRENT_PATH, 'test.db')
@@ -37,6 +36,11 @@ def read_comic(comic_id):
     comic = Comic.query.filter_by(id = comic_id).one()
     return render_template('read_comic.html', comic=comic)
 
+@app.route('/epub/<int:book_id>/<path:filename>')
+def epub_file(book_id, filename):
+    epub = Epub.query.filter_by(id = book_id).one()
+    return send_from_directory(epub.extracted_path, filename=filename)
+
 @app.route('/read/pdf/<int:book_id>')
 def read_pdf(book_id):
     book = Pdf.query.filter_by(id = book_id).one()
@@ -64,6 +68,8 @@ def upload_file():
                         handler = CbrHandler()
                     elif extension == '.cbt':
                         handler = CbtHandler()
+                elif extension == '.epub':
+                    handler = EpubHandler()
                 elif extension == '.pdf':
                     handler = PdfHandler()
                 handler.handle_file(basename, uploaded_file_path)

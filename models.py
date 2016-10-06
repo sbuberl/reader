@@ -69,6 +69,7 @@ class ComicPage(db.Model):
 
 class Epub(Document):
     __tablename__ = "epubs"
+    extracted_path = db.Column(db.String, nullable=False)
 
 
 class Pdf(Document):

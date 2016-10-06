@@ -1,6 +1,6 @@
 from constants import LIBRARY_FOLDER, THUMBNAILS
 import imghdr
-from models import Comic, ComicPage, File, FileType, DocumentType, Pdf
+from models import Comic, ComicPage, File, FileType, DocumentType, Epub, Pdf
 import os
 from PIL import Image
 from rarfile import RarFile
@@ -118,6 +118,21 @@ class CbtHandler(ComicHandler):
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
         with TarFile(comic_file_path) as tar:
             self._extract_archve_info(tar, comic, extracted_path, image_type)
+
+
+class EpubHandler(BaseHandler):
+
+    def handle_file(self, name, epub_file_path):
+        epub_file = self.save_original_file(epub_file_path, 'epub')
+        epub_doc = DocumentType.query.filter_by(category='epub').one()
+        extracted_path = os.path.join(LIBRARY_FOLDER, name)
+        self._extract_zip(epub_file.path, extracted_path)
+        epub = Epub(name=name, file_id=epub_file.id, type=epub_doc.id, extracted_path=extracted_path)
+        add_and_refresh(epub)
+
+    def _extract_zip(self, epub_library_file, extracted_path):
+        with ZipFile(epub_library_file) as archive:
+            archive.extractall(extracted_path)
 
 class PdfHandler(BaseHandler):
     def handle_file(self, name, pdf_file_path):
