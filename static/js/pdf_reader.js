@@ -55,7 +55,7 @@ function queueRenderPage(num) {
 /**
 * Displays previous page.
 */
-function onPrevPage() {
+function prevPage() {
     if (pageNum <= 1) {
         return;
     }
@@ -66,7 +66,7 @@ function onPrevPage() {
 /**
 * Displays next page.
 */
-function onNextPage() {
+function nextPage() {
     if (pageNum >= pdfDoc.numPages) {
         return;
     }
@@ -95,8 +95,8 @@ function readPdf(pdfFileId) {
     canvas = document.getElementById('pdf-canvas');
     ctx = canvas.getContext('2d');
 
-    $('#prev').on('click', onPrevPage);
-    $('#next').on('click', onNextPage);
+    $('#prev').on('click', prevPage);
+    $('#next').on('click', nextPage);
 
      if(isTouchDevice()) {
         $('#page')
