@@ -11,7 +11,11 @@ from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
 
 class BaseHandler:
-    def make_cover_thumbnail(self, cover_name, cover_path, book_name, image_type):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _make_cover_thumbnail(cover_name, cover_path, book_name, image_type):
         cover_extension = os.path.splitext(cover_name)[1]
         thumbnail_name = '{0}{1}'.format(book_name, cover_extension)
         thumbnail_path = os.path.join(THUMBNAILS, thumbnail_name)
@@ -24,7 +28,8 @@ class BaseHandler:
         add_and_refresh(thumbnail)
         return thumbnail
 
-    def save_original_file(self, uploaded_file, type_value):
+    @staticmethod
+    def _save_original_file(uploaded_file, type_value):
         file_name = path_leaf(uploaded_file)
         library_path = os.path.join(LIBRARY_FOLDER, file_name)
         copyfile(uploaded_file, library_path)
@@ -47,7 +52,7 @@ class ComicHandler(BaseHandler):
 
     def handle_file(self, name, comic_file_path):
         comic_doc = DocumentType.query.filter_by(category='comic').one()
-        comic_file = self.save_original_file(comic_file_path, 'comic')
+        comic_file = self._save_original_file(comic_file_path, 'comic')
         comic = Comic(name=name, type=comic_doc.id, file_id=comic_file.id)
         match = re.match("(.+?)\s+(\d+)\.", comic_file_path)
         if match:
@@ -58,7 +63,7 @@ class ComicHandler(BaseHandler):
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self.extract_file(comic, comic_file_path, extracted_path, image_type)
 
-    def _extract_archve_info(self, archive, comic, extracted_path, image_type):
+    def _extract_archive_info(self, archive, comic, extracted_path, image_type):
         page_number = 1
         info_list = self._get_info_list(archive)
         is_zip = isinstance(archive, ZipFile)
@@ -89,20 +94,20 @@ class ComicHandler(BaseHandler):
             first_page_index += 1
             first_page = self._get_info_filename(info_list[first_page_index])
         first_page_path = os.path.join(extracted_path, first_page)
-        cover = self.make_cover_thumbnail(first_page, first_page_path, comic.name, image_type.id)
+        cover = self._make_cover_thumbnail(first_page, first_page_path, comic.name, image_type.id)
         comic.cover_id = cover.id
 
 
 class CbzHandler(ComicHandler):
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
-        with ZipFile(comic_file_path) as zip:
-            self._extract_archve_info(zip, comic, extracted_path, image_type)
+        with ZipFile(comic_file_path) as zip_file:
+            self._extract_archive_info(zip_file, comic, extracted_path, image_type)
 
 
 class CbrHandler(ComicHandler):
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
-        with RarFile(comic_file_path) as rar:
-            self._extract_archve_info(rar, comic, extracted_path, image_type)
+        with RarFile(comic_file_path) as rar_file:
+            self._extract_archive_info(rar_file, comic, extracted_path, image_type)
 
 
 class CbtHandler(ComicHandler):
@@ -116,30 +121,30 @@ class CbtHandler(ComicHandler):
         return archive.getmembers()
 
     def extract_file(self, comic, comic_file_path, extracted_path, image_type):
-        with TarFile(comic_file_path) as tar:
-            self._extract_archve_info(tar, comic, extracted_path, image_type)
+        with TarFile(comic_file_path) as tar_file:
+            self._extract_archive_info(tar_file, comic, extracted_path, image_type)
 
 
 class EpubHandler(BaseHandler):
 
     def handle_file(self, name, epub_file_path):
-        epub_file = self.save_original_file(epub_file_path, 'epub')
+        epub_file = self._save_original_file(epub_file_path, 'epub')
         epub_doc = DocumentType.query.filter_by(category='epub').one()
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self._extract_zip(epub_file.path, extracted_path)
         epub = Epub(name=name, file_id=epub_file.id, type=epub_doc.id, extracted_path=extracted_path)
         add_and_refresh(epub)
 
-    def _extract_zip(self, epub_library_file, extracted_path):
+    @staticmethod
+    def _extract_zip(epub_library_file, extracted_path):
         with ZipFile(epub_library_file) as archive:
             archive.extractall(extracted_path)
 
+
 class PdfHandler(BaseHandler):
     def handle_file(self, name, pdf_file_path):
-        pdf_file = self.save_original_file(pdf_file_path, 'pdf')
+        pdf_file = self._save_original_file(pdf_file_path, 'pdf')
         pdf_doc = DocumentType.query.filter_by(category='pdf').one()
         pdf = Pdf(name=name, file_id=pdf_file.id, type=pdf_doc.id)
         add_and_refresh(pdf)
-
-
 

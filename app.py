@@ -19,6 +19,7 @@ if not os.path.isdir(LIBRARY_FOLDER):
 if not os.path.isdir(THUMBNAILS):
     os.makedirs(THUMBNAILS)
 
+
 @app.route('/')
 def index():
     comics = db.session.query(Comic.id, Comic.name, DocumentType.category, Comic.cover_id).join(DocumentType)
@@ -27,44 +28,51 @@ def index():
     docs = comics.union(pdfs).union(epubs).all()
     return render_template('index.html', documents=docs)
 
+
 @app.route('/file/<int:file_id>')
 def get_file(file_id):
-    file = File.query.filter_by(id = file_id).one()
-    return send_file(file.path)
+    found_file = File.query.filter_by(id=file_id).one()
+    return send_file(found_file.path)
+
 
 @app.route('/read/comic/<int:comic_id>')
 def read_comic(comic_id):
-    comic = Comic.query.filter_by(id = comic_id).one()
+    comic = Comic.query.filter_by(id=comic_id).one()
     return render_template('read_comic.html', comic=comic)
+
 
 @app.route('/read/epub/<int:book_id>')
 def read_epub(book_id):
-    epub = Epub.query.filter_by(id = book_id).one()
+    epub = Epub.query.filter_by(id=book_id).one()
     return render_template('read_epub.html', book=epub)
+
 
 @app.route('/epub/<int:book_id>/<path:filename>')
 def epub_file(book_id, filename):
-    epub = Epub.query.filter_by(id = book_id).one()
+    epub = Epub.query.filter_by(id=book_id).one()
     return send_from_directory(epub.extracted_path, filename=filename)
+
 
 @app.route('/read/pdf/<int:book_id>')
 def read_pdf(book_id):
-    book = Pdf.query.filter_by(id = book_id).one()
+    book = Pdf.query.filter_by(id=book_id).one()
     return render_template('read_pdf.html', file_id=book.file_id)
+
 
 @app.route('/comic/<int:comic_id>/page/<int:page_number>')
 def get_comic_page(comic_id, page_number):
     page = ComicPage.query.filter(ComicPage.comic_id == comic_id).filter(ComicPage.page_number == page_number).one()
     return get_file(page.file_id)
 
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        file = request.files['file']
-        if file:
-            filename = file.filename
+        uploaded_file = request.files['file']
+        if uploaded_file:
+            filename = upload_file.filename
             uploaded_file_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(uploaded_file_path)
+            uploaded_file.save(uploaded_file_path)
             basename, extension = os.path.splitext(filename)
             if extension in ALLOWED_EXTENSIONS:
                 if extension in COMIC_EXTENSIONS:
@@ -76,12 +84,13 @@ def upload_file():
                         handler = CbtHandler()
                 elif extension == '.epub':
                     handler = EpubHandler()
-                elif extension == '.pdf':
+                else:
                     handler = PdfHandler()
                 handler.handle_file(basename, uploaded_file_path)
                 db.session.commit()
                 return redirect(url_for('index'))
     return render_template('upload.html')
+
 
 if __name__ == '__main__':
     db.init_app(app)
