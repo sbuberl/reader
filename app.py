@@ -70,7 +70,7 @@ def upload_file():
     if request.method == 'POST':
         uploaded_file = request.files['file']
         if uploaded_file:
-            filename = upload_file.filename
+            filename = uploaded_file.filename
             uploaded_file_path = os.path.join(UPLOAD_FOLDER, filename)
             uploaded_file.save(uploaded_file_path)
             basename, extension = os.path.splitext(filename)
