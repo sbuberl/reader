@@ -23,7 +23,8 @@ if not os.path.isdir(THUMBNAILS):
 def index():
     comics = db.session.query(Comic.id, Comic.name, DocumentType.category, Comic.cover_id).join(DocumentType)
     pdfs = db.session.query(Pdf.id, Pdf.name, DocumentType.category, Pdf.cover_id).join(DocumentType)
-    docs = comics.union(pdfs).all()
+    epubs = db.session.query(Epub.id, Epub.name, DocumentType.category, Epub.cover_id).join(DocumentType)
+    docs = comics.union(pdfs).union(epubs).all()
     return render_template('index.html', documents=docs)
 
 @app.route('/file/<int:file_id>')
@@ -35,6 +36,11 @@ def get_file(file_id):
 def read_comic(comic_id):
     comic = Comic.query.filter_by(id = comic_id).one()
     return render_template('read_comic.html', comic=comic)
+
+@app.route('/read/epub/<int:book_id>')
+def read_epub(book_id):
+    epub = Epub.query.filter_by(id = book_id).one()
+    return render_template('read_epub.html', book=epub)
 
 @app.route('/epub/<int:book_id>/<path:filename>')
 def epub_file(book_id, filename):
