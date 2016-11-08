@@ -1,4 +1,6 @@
+epub
 Flask
 Flask-SQLAlchemy
 Pillow
+python-dateutil
 rarfile

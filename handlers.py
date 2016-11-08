@@ -1,4 +1,6 @@
 from constants import LIBRARY_FOLDER, THUMBNAILS
+import dateutil.parser
+import epub
 import imghdr
 from models import Comic, ComicPage, File, FileType, DocumentType, Epub, Pdf
 import os
@@ -132,8 +134,25 @@ class EpubHandler(BaseHandler):
         epub_doc = DocumentType.query.filter_by(category='epub').one()
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self._extract_zip(epub_file.path, extracted_path)
-        epub = Epub(name=name, file_id=epub_file.id, type=epub_doc.id, extracted_path=extracted_path)
-        add_and_refresh(epub)
+        (title, creators, publisher, release_date) = self._read_epub_meta(epub_file.path)
+        epub_obj = Epub(name=title, file_id=epub_file.id, type=epub_doc.id, extracted_path=extracted_path,
+                        author=creators, publisher=publisher, release_date=release_date)
+        add_and_refresh(epub_obj)
+
+    @staticmethod
+    def _read_epub_meta(epub_library_file):
+        with epub.open_epub(epub_library_file, 'r') as epub_file:
+            metadata = epub_file.opf.metadata
+            title = metadata.titles[0][0]                                       # (title, lang)
+            creators = ', '.join([x[0] for x in metadata.creators])             # (name, role, file_as)
+            publisher = metadata.publisher
+            release_date = None
+            if metadata.dates:
+                try:
+                    release_date = dateutil.parser.parse(metadata.dates[0][0])  # (date, event)
+                except (ValueError, OverflowError):
+                    pass
+            return title, creators, publisher, release_date
 
     @staticmethod
     def _extract_zip(epub_library_file, extracted_path):

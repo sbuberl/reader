@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declared_attr
 
 db = SQLAlchemy()
 
+
 class File(db.Model):
     __tablename__ = "files"
     id = db.Column(db.Integer, primary_key=True)
