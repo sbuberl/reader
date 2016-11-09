@@ -2,8 +2,21 @@
 {% block title %}Upload file{% endblock %}
 {% block content %}
   <h1>Upload new File</h1>
-  <form action="" method=post enctype=multipart/form-data>
-    <p><input type=file name=file accept="application/epub+zip, application/pdf, application/cbr, application/cbz, application/cbt, .pdf,.cbr,.cbz,.cbt,.epub" >
-     <input type=submit value=Upload>
+
+  <form action="" method='post' enctype='multipart/form-data'>
+    {{ form.csrf_token }}
+   {% for field in form if field.widget.input_type != 'hidden' %}
+   {% if field.errors %}
+     <div class="form-group has-error">
+         {{ field.label }}
+         {{ field(class_='form-control') }}
+         <span class="help-block">{% for error in field.errors %}{{ error }}{% if not loop.last %}<br />{% endif %}{% endfor %}</span>
+    </div>
+   {% else %}
+      {{ field.label }}
+      {{ field(class_='form-control') }}
+   {% endif %}
+ {% endfor %}
+    <button type="submit" class="btn btn-primary">Upload</button>
   </form>
 {% endblock %}

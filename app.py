@@ -1,5 +1,6 @@
 from constants import *
-from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory
+from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
+from forms import UploadForm
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
 from models import db, FileType, File, ComicPage, Comic, DocumentType, Pdf, Epub
 import os
@@ -8,6 +9,7 @@ db_name = os.path.join(CURRENT_PATH, 'test.db')
 
 app = Flask(__name__)
 app.secret_key = '\x1f\x14E\x95\xd86\xb2\x08\xa5\xe4\x8a\xcf\xd8f\xb8\xfdS<\xa3\xc2\x00\x1d\x99\xca`\xcc_6\xee\xa3\xd0;'
+WTF_CSRF_SECRET_KEY = '\x19B\xe3\xe0v\x1du\xd4\xb7G\x04\xe3-\xddD\xe8\xde+@\xd7$Ixsp]\xf0\xb5z\xcfO[\x90\xdd\xf8\xcd'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -67,42 +69,47 @@ def get_comic_page(comic_id, page_number):
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    if request.method == 'POST':
-        uploaded_file = request.files['file']
-        if uploaded_file:
-            filename = uploaded_file.filename
-            uploaded_file_path = os.path.join(UPLOAD_FOLDER, filename)
-            uploaded_file.save(uploaded_file_path)
-            basename, extension = os.path.splitext(filename)
-            if extension in ALLOWED_EXTENSIONS:
-                if extension in COMIC_EXTENSIONS:
-                    if extension == '.cbz':
-                        handler = CbzHandler()
-                    elif extension == '.cbr':
-                        handler = CbrHandler()
-                    elif extension == '.cbt':
-                        handler = CbtHandler()
-                elif extension == '.epub':
-                    handler = EpubHandler()
-                else:
-                    handler = PdfHandler()
-                handler.handle_file(basename, uploaded_file_path)
-                db.session.commit()
-                return redirect(url_for('index'))
-    return render_template('upload.html')
+    form = UploadForm()
+    if form.validate_on_submit():
+        uploaded_file = form.uploaded_file.data
+        filename = uploaded_file.filename
+        uploaded_file_path = os.path.join(UPLOAD_FOLDER, filename)
+        uploaded_file.save(uploaded_file_path)
+        basename, extension = os.path.splitext(filename)
+        extension = extension[1:]
+        if extension in ALLOWED_EXTENSIONS:
+            if extension in COMIC_EXTENSIONS:
+                if extension == 'cbz':
+                    handler = CbzHandler()
+                elif extension == 'cbr':
+                    handler = CbrHandler()
+                elif extension == 'cbt':
+                    handler = CbtHandler()
+            elif extension == 'epub':
+                handler = EpubHandler()
+            else:
+                handler = PdfHandler()
+            handler.handle_file(basename, uploaded_file_path)
+            db.session.commit()
+            return redirect(url_for('index'))
+    return render_template('upload.html', form=form)
+
+
+def populate_db():
+    db.create_all()
+    db.session.add(DocumentType(category='comic'))
+    db.session.add(DocumentType(category='epub'))
+    db.session.add(DocumentType(category='pdf'))
+    db.session.add(FileType(category='comic'))
+    db.session.add(FileType(category='epub'))
+    db.session.add(FileType(category='image'))
+    db.session.add(FileType(category='pdf'))
+    db.session.commit()
 
 
 if __name__ == '__main__':
     db.init_app(app)
     if not os.path.isfile(db_name):
         with app.app_context():
-            db.create_all()
-            db.session.add(DocumentType(category='comic'))
-            db.session.add(DocumentType(category='epub'))
-            db.session.add(DocumentType(category='pdf'))
-            db.session.add(FileType(category='comic'))
-            db.session.add(FileType(category='epub'))
-            db.session.add(FileType(category='image'))
-            db.session.add(FileType(category='pdf'))
-            db.session.commit()
+            populate_db()
     app.run(host='0.0.0.0', debug=True)
