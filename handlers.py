@@ -128,19 +128,18 @@ class CbtHandler(ComicHandler):
 
 
 class EpubHandler(BaseHandler):
-
     def handle_file(self, name, epub_file_path):
         epub_file = self._save_original_file(epub_file_path, 'epub')
         epub_doc = DocumentType.query.filter_by(category='epub').one()
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self._extract_zip(epub_file.path, extracted_path)
-        (title, creators, publisher, release_date) = self._read_epub_meta(epub_file.path)
+        (title, creators, publisher, release_date, cover_id) = self._read_epub_meta(epub_file.path, extracted_path)
         epub_obj = Epub(name=title, file_id=epub_file.id, type=epub_doc.id, extracted_path=extracted_path,
-                        author=creators, publisher=publisher, release_date=release_date)
+                        author=creators, publisher=publisher, release_date=release_date, cover_id=cover_id)
         add_and_refresh(epub_obj)
 
     @staticmethod
-    def _read_epub_meta(epub_library_file):
+    def _read_epub_meta(epub_library_file, extracted_path):
         with epub.open_epub(epub_library_file, 'r') as epub_file:
             metadata = epub_file.opf.metadata
             title = metadata.titles[0][0]                                       # (title, lang)
@@ -152,7 +151,20 @@ class EpubHandler(BaseHandler):
                     release_date = dateutil.parser.parse(metadata.dates[0][0])  # (date, event)
                 except (ValueError, OverflowError):
                     pass
-            return title, creators, publisher, release_date
+
+            cover_id = next((x[1] for x in metadata.metas if x[0] == 'cover'), None)     # {name, value)
+            thumbnail_id = None
+            if cover_id:
+                cover_manifest = epub_file.get_item(cover_id)
+                cover_rel_path = cover_manifest.href
+                if os.name == 'nt':
+                    cover_rel_path = cover_rel_path.replace("/", "\\")
+                cover_file_name = path_leaf(cover_rel_path)
+                cover_path = os.path.join(extracted_path, epub_file.content_path, cover_rel_path)
+                image_type = FileType.query.filter_by(category='image').one()
+                thumbnail = BaseHandler._make_cover_thumbnail(cover_file_name, cover_path, title, image_type.id)
+                thumbnail_id = thumbnail.id
+            return title, creators, publisher, release_date, thumbnail_id
 
     @staticmethod
     def _extract_zip(epub_library_file, extracted_path):
