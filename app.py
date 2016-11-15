@@ -28,6 +28,7 @@ def index():
     pdfs = db.session.query(Pdf.id, Pdf.name, DocumentType.category, Pdf.cover_id).join(DocumentType)
     epubs = db.session.query(Epub.id, Epub.name, DocumentType.category, Epub.cover_id).join(DocumentType)
     docs = comics.union(pdfs).union(epubs).all()
+    docs.sort(key=lambda x: x.name)
     return render_template('index.html', documents=docs)
 
 

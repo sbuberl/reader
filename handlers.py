@@ -1,16 +1,19 @@
 from constants import LIBRARY_FOLDER, THUMBNAILS
+from datetime import datetime
 import dateutil.parser
 import epub
 import imghdr
 from models import Comic, ComicPage, File, FileType, DocumentType, Epub, Pdf
 import os
 from PIL import Image
+from PyPDF2 import PdfFileReader
 from rarfile import RarFile
 import re
 from shutil import copyfile
 from tarfile import TarFile
 from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
+
 
 class BaseHandler:
     def __init__(self):
@@ -176,6 +179,24 @@ class PdfHandler(BaseHandler):
     def handle_file(self, name, pdf_file_path):
         pdf_file = self._save_original_file(pdf_file_path, 'pdf')
         pdf_doc = DocumentType.query.filter_by(category='pdf').one()
-        pdf = Pdf(name=name, file_id=pdf_file.id, type=pdf_doc.id)
+        (title, author, release_date) = self._read_pdf_meta(pdf_file.path, name)
+        pdf = Pdf(name=title, file_id=pdf_file.id, type=pdf_doc.id, author=author, release_date=release_date)
         add_and_refresh(pdf)
+
+    @staticmethod
+    def _read_pdf_meta(pdf_file_path, name):
+        pdf_stream = open(pdf_file_path, "rb")
+        pdf_reader = PdfFileReader(pdf_stream)
+        pdf_info = pdf_reader.getDocumentInfo()
+        title = name
+        author = None
+        release_date = None
+        if '/Title' in pdf_info:
+            title = pdf_info['/Title']
+        if '/Author' in pdf_info:
+            author = pdf_info['/Author']
+        if '/CreationDate' in pdf_info:
+            date_string = pdf_info['/CreationDate'].replace("'", '')        # D:YYYYMMDDHHmmSSOHH'mm'
+            release_date = datetime.strptime(date_string, 'D:%Y%m%d%H%M%S')
+        return title, author, release_date
 

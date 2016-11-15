@@ -3,5 +3,6 @@ Flask
 Flask-SQLAlchemy
 Flask-WTF
 Pillow
+PyPDF2
 python-dateutil
 rarfile
