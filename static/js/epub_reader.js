@@ -1,60 +1,25 @@
 
-var epub = null;
+var reader = null;
 
-function prevPage()
-{
-    epub.prevPage();
+function EpubReader(epubUrl) {
+    Reader.call(this, "iframe", "#ebookHolder");
+    this.epub = ePub(epubUrl);
+    this.epub.renderTo("ebookHolder");;
 }
 
-function nextPage()
-{
-    epub.nextPage();
-}
+EpubReader.prototype = Object.create(Reader.prototype);
+EpubReader.prototype.constructor = EpubReader;
 
-function fitHorizontal() {
-  $("#ebookHolder").removeClass();
-  $("iframe").removeClass();
-  $("iframe").addClass('fitHorizontal');
-}
+EpubReader.prototype.prevPage = function () {
+    this.epub.prevPage();
+};
 
-function fitVertical() {
-  $("iframe").removeClass();
-  $("iframe").addClass('fitVertical');
-  $("#ebookHolder").addClass('fit');
-
-}
-
-function fitBoth() {
-    $("iframe").removeClass();
-    $("iframe").addClass('fitBoth');
-    $("#ebookHolder").addClass('fit');
-}
+EpubReader.prototype.nextPage = function () {
+    this.epub.nextPage();
+};
 
 function readEpub(epubUrl) {
-
-    epub = ePub(epubUrl);
-    epub.renderTo("ebookHolder");
-
-    $("#prevPanel").on("click", prevPage);
-    $("#nextPanel").on("click", nextPage);
-
-    if (isTouchDevice()) {
-        $('iframe')
-            .swipeEvents()
-            .bind("swipeLeft", prevPage)
-            .bind("swipeRight", nextPage);
-    }
-
-    $("#fitVertical").on("click", fitVertical);
-    $("#fitHorizontal").on("click", fitHorizontal);
-    $("#fitBoth").on("click", fitBoth);
-
-    fitVertical();
-
-
-
-
+    reader = new EpubReader(epubUrl);
+    reader.setup();
+    reader.fitVertical();
 }
-
-
-

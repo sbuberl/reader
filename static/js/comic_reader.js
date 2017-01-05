@@ -1,61 +1,35 @@
 
-var page = 1;
-var pageCount;
-var comicId;
+var reader;
 
-function displayPage() {
-    $("#page").attr("src", "/comic/" + comicId + "/page/" + page);
+function ComicReader(comicId, pageCount) {
+    Reader.call(this, "#page", "#pageHolder");
+    this.comicId = comicId;
+    this.pageCount = pageCount;
+    this.page = 1;
 }
 
-function prevPage() {
-    if (page > 1) {
-        page -= 1;
-        displayPage(comicId);
+ComicReader.prototype = Object.create(Reader.prototype);
+ComicReader.prototype.constructor = ComicReader;
+
+ComicReader.prototype.displayPage = function() {
+    $("#page").attr("src", "/comic/" + this.comicId + "/page/" + this.page);
+};
+
+ComicReader.prototype.prevPage = function() {
+    if(this.page > 1) {
+        this.page -= 1;
+        this.displayPage();
     }
-}
+};
 
-function nextPage() {
-    if (page < pageCount) {
-        page += 1;
-        displayPage(comicId);
+ComicReader.prototype.nextPage = function() {
+    if(this.page < this.pageCount) {
+        this.page += 1;
+        this.displayPage();
     }
-}
+};
 
-function fitHorizontal() {
-  $("#pageHolder").removeClass();
-  $("#page").removeClass();
-  $("#page").addClass('fitHorizontal');
-}
-
-function fitVertical() {
-  $("#page").removeClass();
-  $("#page").addClass('fitVertical');
-  $("#pageHolder").addClass('fit');
-
-}
-function fitBoth() {
-  $("#page").removeClass();
-  $("#page").addClass('fitBoth');
-  $("#pageHolder").addClass('fit');
-}
-
-function readComic(comic, pages) {
-    comicId = comic;
-    pageCount = pages;
-    $("#prevPanel").on("click", prevPage);
-    $("#nextPanel").on("click", nextPage);
-
-    if(isTouchDevice()) {
-        $('#page')
-          .swipeEvents()
-          .bind("swipeLeft",  prevPage)
-          .bind("swipeRight", nextPage);
-    }
-
-    $("#fitVertical").on("click",fitVertical);
-    $("#fitHorizontal").on("click",fitHorizontal);
-    $("#fitBoth").on("click",fitBoth);
-
-    fitHorizontal();
-
+function readComic(comicId, pageCount) {
+    reader = new ComicReader(comicId, pageCount);
+    reader.setup();
 }

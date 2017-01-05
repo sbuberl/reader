@@ -1,119 +1,83 @@
-var pdfDoc = null,
-    pageNum = 1,
-    pageRendering = false,
-    pageNumPending = null,
-    scale = 0.8,
-    canvas = null,
-    ctx = null;
 
-/**
-* Get page info from document, resize canvas accordingly, and render page.
-* @param num Page number.
-*/
-function renderPage(num) {
-    pageRendering = true;
+
+var reader = null;
+var scale = 0.8;
+
+function PdfReader(pdfFileId) {
+    Reader.call(this, "#pdf-canvas", "#pdf-holder");
+    this.context = this.container[0].getContext('2d');
+    this.pageNum = 1;
+    this.pageNumPending = null;
+    this.pageRendering = false;
+    var self = this;
+    PDFJS.getDocument('/file/' + pdfFileId).then(function (pdfDoc_) {
+        self.pdfDoc = pdfDoc_;
+        $('#page_count').text(pdfDoc_.numPages);
+
+        // Initial/first page rendering
+        self.renderPage(self.pageNum);
+    });
+}
+
+PdfReader.prototype = Object.create(Reader.prototype);
+PdfReader.prototype.constructor = PdfReader;
+
+PdfReader.prototype.renderPage = function(num) {
+    this.pageRendering = true;
     // Using promise to fetch the page
-    pdfDoc.getPage(num).then(function(page) {
+    var self = this;
+    this.pdfDoc.getPage(num).then(function (page) {
         var viewport = page.getViewport(scale);
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        self.container.height = viewport.height;
+        self.container.width = viewport.width;
 
         // Render PDF page into canvas context
         var renderContext = {
-            canvasContext: ctx,
+            canvasContext: self.context,
             viewport: viewport
         };
         var renderTask = page.render(renderContext);
 
         // Wait for rendering to finish
         renderTask.promise.then(function () {
-            pageRendering = false;
-            if (pageNumPending !== null) {
+            self.pageRendering = false;
+            if (self.pageNumPending !== null) {
                 // New page rendering is pending
-                renderPage(pageNumPending);
-                pageNumPending = null;
+                self.renderPage(self.pageNumPending);
+                self.pageNumPending = null;
             }
         });
     });
 
     // Update page counters
-    $('#page_num').text(pageNum);
-}
+    $('#page_num').text(this.pageNum);
+};
 
-/**
-* If another page rendering in progress, waits until the rendering is
-* finised. Otherwise, executes rendering immediately.
-*/
-function queueRenderPage(num) {
-    if (pageRendering) {
-        pageNumPending = num;
+PdfReader.prototype.queueRenderPage = function(num) {
+    if (this.pageRendering) {
+        this.pageNumPending = num;
     } else {
-        renderPage(num);
+        this.renderPage(num);
     }
-}
+};
 
-/**
-* Displays previous page.
-*/
-function prevPage() {
-    if (pageNum <= 1) {
+PdfReader.prototype.prevPage = function() {
+    if (this.pageNum <= 1) {
         return;
     }
-    pageNum--;
-    queueRenderPage(pageNum);
-}
+    this.pageNum--;
+    this.queueRenderPage(this.pageNum);
+};
 
-/**
-* Displays next page.
-*/
-function nextPage() {
-    if (pageNum >= pdfDoc.numPages) {
+PdfReader.prototype.nextPage = function() {
+    if (this.pageNum >= this.pdfDoc.numPages) {
         return;
     }
-    pageNum++;
-    queueRenderPage(pageNum);
-}
+    this.pageNum++;
+    this.queueRenderPage(this.pageNum);
+};
 
-function fitHorizontal() {
-  $("#pdf-holder").removeClass();
-  $("#pdf-canvas").removeClass();
-  $("#pdf-canvas").addClass('fitHorizontal');
-}
-
-function fitVertical() {
-  $("#pdf-canvas").removeClass();
-  $("#pdf-canvas").addClass('fitVertical');
-  $("#pdf-holder").addClass('fit');
-
-}
-function fitBoth() {
-  $("#pdf-canvas").removeClass();
-  $("#pdf-canvas").addClass('fitBoth');
-  $("#pdf-holder").addClass('fit');
-}
 function readPdf(pdfFileId) {
-    canvas = document.getElementById('pdf-canvas');
-    ctx = canvas.getContext('2d');
-
-    $('#prev').on('click', prevPage);
-    $('#next').on('click', nextPage);
-
-     if(isTouchDevice()) {
-        $('#page')
-          .swipeEvents()
-          .bind("swipeLeft",  prevPage)
-          .bind("swipeRight", nextPage);
-    }
-
-    $("#fitVertical").on("click",fitVertical);
-    $("#fitHorizontal").on("click",fitHorizontal);
-    $("#fitBoth").on("click",fitBoth);
-
-    PDFJS.getDocument('/file/' + pdfFileId).then(function (pdfDoc_) {
-        pdfDoc = pdfDoc_;
-        $('#page_count').text(pdfDoc.numPages);
-
-        // Initial/first page rendering
-        renderPage(pageNum);
-    });
+    reader = new PdfReader(pdfFileId);
+    reader.setup();
 }

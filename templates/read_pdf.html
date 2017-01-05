@@ -3,6 +3,7 @@
 {% block head %}
     {{ super() }}
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/1.6.212/pdf.combined.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/reader.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/pdf_reader.js') }}"></script>
 {% endblock %}
 {% block onload %}onload="readPdf({{ file_id }})"{% endblock %}

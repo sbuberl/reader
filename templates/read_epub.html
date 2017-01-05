@@ -4,6 +4,7 @@
     {{ super() }}
     <script type="text/javascript" src="{{ url_for('static', filename='js/zip.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/epub.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/reader.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/epub_reader.js') }}"></script>
 {% endblock %}
 {% block onload %}onload="readEpub('/epub/{{ book.id }}/')"{% endblock %}
