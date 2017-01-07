@@ -2,10 +2,8 @@
 {% block title %}Reading Comic{% endblock %}
 {% block head %}
     {{ super() }}
-    <script type="text/javascript" src="{{ url_for('static', filename='js/reader.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/comic_reader.js') }}"></script>
 {% endblock %}
-{% block onload %}onload="readComic({{ comic.id }}, {{ comic.pages|length }})"{% endblock %}
 {% block content %}
 
     <!-- Fixed navbar -->
@@ -35,5 +33,11 @@
     <div id="pageHolder" >
         <img id="page" src="/comic/{{ comic.id }}/page/1" />
     </div>
+
+    <script>
+        $( document ).ready( function() {
+           GlobalAccess['comic_reader'].readComic({{ comic.id }}, {{ comic.pages|length }});
+        });
+    </script>
 
 {% endblock %}
