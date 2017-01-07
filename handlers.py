@@ -9,7 +9,6 @@ from PIL import Image
 from PyPDF2 import PdfFileReader
 from rarfile import RarFile
 import re
-from shutil import copyfile
 from tarfile import TarFile
 from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
@@ -37,7 +36,7 @@ class BaseHandler:
     def _save_original_file(uploaded_file, file_type):
         file_name = path_leaf(uploaded_file)
         library_path = os.path.join(LIBRARY_FOLDER, file_name)
-        copyfile(uploaded_file, library_path)
+        os.rename(uploaded_file, library_path)
         size = os.path.getsize(library_path)
         new_file = File(name=file_name, path=library_path, size=size, type=file_type)
         add_and_refresh(new_file)
@@ -54,16 +53,16 @@ class ComicHandler(BaseHandler):
     def _get_info_list(self, archive):
         return archive.infolist()
 
-    def handle_file(self, name, comic_file_path):
-        comic_file = self._save_original_file(comic_file_path, 'comic')
+    def handle_file(self, name, upload_file_path):
+        comic_file = self._save_original_file(upload_file_path, COMIC_TYPE)
         comic = Comic(name=name, type=COMIC_TYPE, file_id=comic_file.id)
-        match = re.match("(.+?)\s+(\d+)\.", comic_file_path)
+        match = re.match("(.+?)\s+(\d+)\.", upload_file_path)
         if match:
             comic.series = match.group(1)
             comic.issue = match.group(2)
         add_and_refresh(comic)
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
-        self.extract_file(comic, comic_file_path, extracted_path)
+        self.extract_file(comic, comic_file.path, extracted_path)
 
     def _extract_archive_info(self, archive, comic, extracted_path):
         page_number = 1
@@ -129,7 +128,7 @@ class CbtHandler(ComicHandler):
 
 class EpubHandler(BaseHandler):
     def handle_file(self, name, epub_file_path):
-        epub_file = self._save_original_file(epub_file_path, 'epub')
+        epub_file = self._save_original_file(epub_file_path, EPUB_TYPE)
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self._extract_zip(epub_file.path, extracted_path)
         (title, creators, publisher, release_date, cover_id) = self._read_epub_meta(epub_file.path, extracted_path)
@@ -172,7 +171,7 @@ class EpubHandler(BaseHandler):
 
 class PdfHandler(BaseHandler):
     def handle_file(self, name, pdf_file_path):
-        pdf_file = self._save_original_file(pdf_file_path, 'pdf')
+        pdf_file = self._save_original_file(pdf_file_path, PDF_TYPE)
         (title, author, release_date) = self._read_pdf_meta(pdf_file.path, name)
         pdf = Pdf(name=title, file_id=pdf_file.id, type=PDF_TYPE, author=author, release_date=release_date)
         add_and_refresh(pdf)
