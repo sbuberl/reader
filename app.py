@@ -37,6 +37,21 @@ def get_file(file_id):
     found_file = File.query.filter_by(id=file_id).one()
     return send_file(found_file.path)
 
+@app.route('/download/<string:doc_type>/<int:doc_id>')
+def download(doc_type, doc_id):
+    if doc_type == COMIC_TYPE:
+        clazz = Comic
+        mimetype = None
+    elif doc_type == EPUB_TYPE:
+        clazz = Epub
+        mimetype = "application/epub+zip"
+    else:
+        clazz = Pdf
+        mimetype = "application/pdf"
+    document = clazz.query.filter_by(id=doc_id).one()
+    doc_file = File.query.filter_by(id=document.file_id).one()
+    return send_file(doc_file.path, mimetype=mimetype, as_attachment=True)
+
 
 @app.route('/read/comic/<int:comic_id>')
 def read_comic(comic_id):

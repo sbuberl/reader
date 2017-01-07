@@ -31,6 +31,9 @@
                             {% endif %}
                                 <p style="text-align: center">{{ document.name }}</p>
                             </a>
+                            <p style="text-align: center">
+                                <a href="/download/{{ document.type }}/{{ document.id }}"><span class="glyphicon glyphicon-download-alt"></span> Download</a>
+                            </p>
                         </div>
                     {% endif %}
                 {% endfor %}
