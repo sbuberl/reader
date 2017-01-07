@@ -2,7 +2,7 @@ from constants import *
 from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
 from forms import UploadForm
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
-from models import db, FileType, File, ComicPage, Comic, DocumentType, Pdf, Epub
+from models import db, File, ComicPage, Comic, Pdf, Epub
 import os
 
 db_name = os.path.join(CURRENT_PATH, 'test.db')
@@ -24,9 +24,9 @@ if not os.path.isdir(THUMBNAILS):
 
 @app.route('/')
 def index():
-    comics = db.session.query(Comic.id, Comic.name, DocumentType.category, Comic.cover_id).join(DocumentType)
-    pdfs = db.session.query(Pdf.id, Pdf.name, DocumentType.category, Pdf.cover_id).join(DocumentType)
-    epubs = db.session.query(Epub.id, Epub.name, DocumentType.category, Epub.cover_id).join(DocumentType)
+    comics = db.session.query(Comic.id, Comic.name, Comic.type, Comic.cover_id)
+    pdfs = db.session.query(Pdf.id, Pdf.name, Pdf.type, Pdf.cover_id)
+    epubs = db.session.query(Epub.id, Epub.name, Epub.type, Epub.cover_id)
     docs = comics.union(pdfs).union(epubs).all()
     docs.sort(key=lambda x: x.name)
     return render_template('index.html', documents=docs)
@@ -98,13 +98,6 @@ def upload_file():
 
 def populate_db():
     db.create_all()
-    db.session.add(DocumentType(category='comic'))
-    db.session.add(DocumentType(category='epub'))
-    db.session.add(DocumentType(category='pdf'))
-    db.session.add(FileType(category='comic'))
-    db.session.add(FileType(category='epub'))
-    db.session.add(FileType(category='image'))
-    db.session.add(FileType(category='pdf'))
     db.session.commit()
 
 

@@ -8,3 +8,8 @@ LIBRARY_FOLDER = os.path.join(DATA_FOLDER, 'library')
 THUMBNAILS = os.path.join(DATA_FOLDER, 'thumbnails')
 COMIC_EXTENSIONS = {'cbr', 'cbz', 'cbt'}
 ALLOWED_EXTENSIONS = COMIC_EXTENSIONS | {'epub', 'pdf'}
+
+COMIC_TYPE = 'comic'
+EPUB_TYPE = 'epub'
+PDF_TYPE = 'pdf'
+IMAGE_TYPE = 'image'

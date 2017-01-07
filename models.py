@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declared_attr
 
+from constants import COMIC_TYPE, EPUB_TYPE, PDF_TYPE, IMAGE_TYPE
+
 db = SQLAlchemy()
 
 
@@ -10,19 +12,7 @@ class File(db.Model):
     name = db.Column(db.String, nullable=False)
     path = db.Column(db.String, nullable=False)
     size = db.Column(db.Integer, nullable=False)
-    type = db.Column(db.Integer, db.ForeignKey('file_types.id'), nullable=False)
-
-
-class FileType(db.Model):
-    __tablename__ = "file_types"
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String, nullable=False)
-
-
-class DocumentType(db.Model):
-    __tablename__ = "doc_types"
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String, nullable=False)
+    type = db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE, IMAGE_TYPE), nullable=False)
 
 
 class Document(db.Model):
@@ -39,7 +29,7 @@ class Document(db.Model):
 
     @declared_attr
     def type(cls):
-        return db.Column(db.Integer, db.ForeignKey('doc_types.id'), nullable=False)
+        return db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE), nullable=False)
 
     @declared_attr
     def file_id(cls):
