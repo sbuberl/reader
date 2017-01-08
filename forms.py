@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, IntegerField
 from wtforms.fields.html5 import DateField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Optional
 
 
 class UploadForm(FlaskForm):
@@ -18,12 +18,12 @@ class ComicMetadataForm(FlaskForm):
     issue = IntegerField('Issue', validators=[DataRequired()])
     author = StringField('Author')
     publisher = StringField('Publisher')
-    release_date = DateField('Release Date')
+    release_date = DateField('Release Date', validators=[Optional()])
 
 
 class DocumentMetadataForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     author = StringField('Author')
     publisher = StringField('Publisher')
-    release_date = DateField('Release Date')
+    release_date = DateField('Release Date', validators=[Optional()])
 
