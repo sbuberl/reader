@@ -4,6 +4,8 @@ from forms import UploadForm, ComicMetadataForm, DocumentMetadataForm
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
 from models import db, File, ComicPage, Comic, Pdf, Epub
 import os
+from PIL import Image
+from utils import add_and_refresh
 
 db_name = os.path.join(CURRENT_PATH, 'test.db')
 
@@ -127,6 +129,12 @@ def edit_metadata(doc_type, doc_id):
         form = ComicMetadataForm(obj=document)
     else:
         form = DocumentMetadataForm(obj=document)
+
+    if document.cover_id:
+        cover_path = url_for('get_file', file_id=document.cover_id)
+    else:
+        cover_path = url_for('static', filename='images/no_cover.jpg')
+
     if form.validate_on_submit():
         document.author = form.author.data
         document.publisher = form.publisher.data
@@ -136,9 +144,28 @@ def edit_metadata(doc_type, doc_id):
             document.name = document.series + ' ' + '{:03d}'.format(document.issue)
         else:
             document.name = form.name.data
+
+        if is_comic is False and form.cover_file.data:
+            uploaded_file = form.cover_file.data
+            cover_name = uploaded_file.filename
+            uploaded_file_path = os.path.join(UPLOAD_FOLDER, cover_name)
+            uploaded_file.save(uploaded_file_path)
+            cover_extension = os.path.splitext(cover_name)[1]
+            thumbnail_name = '{0}{1}'.format(document.name, cover_extension)
+            thumbnail_path = os.path.join(THUMBNAILS, thumbnail_name)
+            if os.path.exists(thumbnail_path):
+                os.remove(thumbnail_path)
+            im = Image.open(uploaded_file_path)
+            im.thumbnail((200, 200))
+            im.save(thumbnail_path)
+            thumbnail = File(name=cover_name, path=thumbnail_path, size=os.path.getsize(thumbnail_path),
+                             type=IMAGE_TYPE)
+            add_and_refresh(thumbnail)
+            os.remove(uploaded_file_path)
+            document.cover_id = thumbnail.id
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('edit_metadata.html', form=form)
+    return render_template('edit_metadata.html', form=form, cover_path=cover_path)
 
 
 def populate_db():

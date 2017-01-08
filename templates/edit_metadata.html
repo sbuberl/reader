@@ -13,6 +13,11 @@
          <span class="help-block">{% for error in field.errors %}{{ error }}{% if not loop.last %}<br />{% endif %}{% endfor %}</span>
     </div>
    {% else %}
+      {% if field.name == 'cover_file' %}
+        <div id="imagePreview">
+            <img id="cover_thumb" src="{{ cover_path }}" />
+        </div>
+      {% endif %}
       {{ field.label }}
       {{ field(class_='form-control') }}
    {% endif %}
