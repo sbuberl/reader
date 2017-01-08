@@ -56,13 +56,14 @@ class ComicHandler(BaseHandler):
     def handle_file(self, name, upload_file_path):
         comic_file = self._save_original_file(upload_file_path, COMIC_TYPE)
         comic = Comic(name=name, type=COMIC_TYPE, file_id=comic_file.id)
-        match = re.match("(.+?)\s+(\d+)\.", upload_file_path)
+        match = re.match("(.+?)\s+(\d+)$", name)
         if match:
             comic.series = match.group(1)
             comic.issue = match.group(2)
         add_and_refresh(comic)
         extracted_path = os.path.join(LIBRARY_FOLDER, name)
         self.extract_file(comic, comic_file.path, extracted_path)
+        return comic
 
     def _extract_archive_info(self, archive, comic, extracted_path):
         page_number = 1
@@ -135,6 +136,7 @@ class EpubHandler(BaseHandler):
         epub_obj = Epub(name=title, file_id=epub_file.id, type=EPUB_TYPE, extracted_path=extracted_path,
                         author=creators, publisher=publisher, release_date=release_date, cover_id=cover_id)
         add_and_refresh(epub_obj)
+        return epub_obj
 
     @staticmethod
     def _read_epub_meta(epub_library_file, extracted_path):
@@ -175,6 +177,7 @@ class PdfHandler(BaseHandler):
         (title, author, release_date) = self._read_pdf_meta(pdf_file.path, name)
         pdf = Pdf(name=title, file_id=pdf_file.id, type=PDF_TYPE, author=author, release_date=release_date)
         add_and_refresh(pdf)
+        return pdf
 
     @staticmethod
     def _read_pdf_meta(pdf_file_path, name):

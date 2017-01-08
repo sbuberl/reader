@@ -1,7 +1,6 @@
+from constants import COMIC_TYPE, EPUB_TYPE, PDF_TYPE, IMAGE_TYPE
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declared_attr
-
-from constants import COMIC_TYPE, EPUB_TYPE, PDF_TYPE, IMAGE_TYPE
 
 db = SQLAlchemy()
 
@@ -19,6 +18,7 @@ class Document(db.Model):
     __abstract__ = True
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    type = db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE), nullable=False)
     author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
@@ -26,10 +26,6 @@ class Document(db.Model):
     @declared_attr
     def cover_id(cls):
         return db.Column(db.Integer, db.ForeignKey('files.id'))
-
-    @declared_attr
-    def type(cls):
-        return db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE), nullable=False)
 
     @declared_attr
     def file_id(cls):
@@ -65,4 +61,5 @@ class Epub(Document):
 
 class Pdf(Document):
     __tablename__ = "pdf"
+
 

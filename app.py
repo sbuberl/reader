@@ -1,6 +1,6 @@
 from constants import *
 from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
-from forms import UploadForm
+from forms import UploadForm, ComicMetadataForm, DocumentMetadataForm
 from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
 from models import db, File, ComicPage, Comic, Pdf, Epub
 import os
@@ -36,6 +36,7 @@ def index():
 def get_file(file_id):
     found_file = File.query.filter_by(id=file_id).one()
     return send_file(found_file.path)
+
 
 @app.route('/download/<string:doc_type>/<int:doc_id>')
 def download(doc_type, doc_id):
@@ -105,10 +106,39 @@ def upload_file():
                 handler = EpubHandler()
             else:
                 handler = PdfHandler()
-            handler.handle_file(basename, uploaded_file_path)
+            document = handler.handle_file(basename, uploaded_file_path)
             db.session.commit()
-            return redirect(url_for('index'))
+            return redirect(url_for('edit_metadata', doc_type=document.type, doc_id=document.id))
     return render_template('upload.html', form=form)
+
+
+@app.route('/metadata/<string:doc_type>/<int:doc_id>', methods=['GET', 'POST'])
+def edit_metadata(doc_type, doc_id):
+    is_comic = False
+    if doc_type == COMIC_TYPE:
+        clazz = Comic
+        is_comic = True
+    elif doc_type == EPUB_TYPE:
+        clazz = Epub
+    else:
+        clazz = Pdf
+    document = clazz.query.filter_by(id=doc_id).one()
+    if is_comic:
+        form = ComicMetadataForm(obj=document)
+    else:
+        form = DocumentMetadataForm(obj=document)
+    if form.validate_on_submit():
+        document.author = form.author.data
+        document.publisher = form.publisher.data
+        if is_comic:
+            document.series = form.series.data
+            document.issue = form.issue.data
+            document.name = document.series + ' ' + '{:03d}'.format(document.issue)
+        else:
+            document.name = form.name.data
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('edit_metadata.html', form=form)
 
 
 def populate_db():
