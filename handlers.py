@@ -1,3 +1,4 @@
+import abc
 from constants import LIBRARY_FOLDER, THUMBNAILS, IMAGE_TYPE, PDF_TYPE, EPUB_TYPE, COMIC_TYPE
 from datetime import datetime
 import dateutil.parser
@@ -14,8 +15,15 @@ from utils import add_and_refresh, path_leaf
 from zipfile import ZipFile
 
 
-class BaseHandler:
+ABC = abc.ABCMeta('ABC', (object,), {})  # compatible with Python 2 *and* 3
+
+
+class BaseHandler(ABC):
     def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def handle_file(self, name, upload_file_path):
         pass
 
     @staticmethod
@@ -196,3 +204,13 @@ class PdfHandler(BaseHandler):
             release_date = datetime.strptime(date_string, 'D:%Y%m%d%H%M%S')
         return title, author, release_date
 
+
+_handler_lookup = {'cbr': CbrHandler, 'cbt': CbtHandler, 'cbz': CbzHandler, 'epub': EpubHandler, 'pdf': PdfHandler}
+
+
+def get_handler(extension):
+    handler = _handler_lookup[extension]
+    if handler:
+        return handler()
+    else:
+        return None

@@ -1,7 +1,7 @@
 from constants import *
 from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
 from forms import UploadForm, ComicMetadataForm, DocumentMetadataForm
-from handlers import CbzHandler, CbrHandler, CbtHandler, PdfHandler, EpubHandler
+from handlers import get_handler
 from models import db, File, ComicPage, Comic, Pdf, Epub
 import os
 from PIL import Image
@@ -96,18 +96,8 @@ def upload_file():
         uploaded_file.save(uploaded_file_path)
         basename, extension = os.path.splitext(filename)
         extension = extension[1:]
-        if extension in ALLOWED_EXTENSIONS:
-            if extension in COMIC_EXTENSIONS:
-                if extension == 'cbz':
-                    handler = CbzHandler()
-                elif extension == 'cbr':
-                    handler = CbrHandler()
-                elif extension == 'cbt':
-                    handler = CbtHandler()
-            elif extension == 'epub':
-                handler = EpubHandler()
-            else:
-                handler = PdfHandler()
+        handler = get_handler(extension)
+        if handler:
             document = handler.handle_file(basename, uploaded_file_path)
             db.session.commit()
             return redirect(url_for('edit_metadata', doc_type=document.type, doc_id=document.id))
