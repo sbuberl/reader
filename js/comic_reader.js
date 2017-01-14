@@ -1,37 +1,46 @@
+import React from 'react';
+import ComicPage from './comic_page';
+import ReaderNavbar from './reader_navbar';
 
-import { Reader } from "./reader";
+export default class ComicReader extends React.Component {
+    constructor(props) {
+        super(props);
 
-export class ComicReader extends Reader {
-    constructor(comicId, pageCount) {
-        super("#page", "#pageHolder");
-        this.comicId = comicId;
-        this.pageCount = pageCount;
-        this.page = 1;
+        this.state = {
+            pageNumber: 1,
+            wrapperClass: "fit",
+            readerClass: "fitVertical"
+        };
+
+        this.previousPage = this.previousPage.bind(this);
+        this.nextPage = this.nextPage.bind(this);
+        this.onFitChange = this.onFitChange.bind(this);
     }
 
-    displayPage() {
-        this.container.attr("src", "/comic/" + this.comicId + "/page/" + this.page);
-    }
-
-    prevPage() {
-        if(this.page > 1) {
-            this.page -= 1;
-            this.displayPage();
+    previousPage() {
+        if(this.state.pageNumber > 1) {
+            this.setState({pageNumber: this.state.pageNumber - 1});
         }
     }
 
     nextPage() {
-        if(this.page < this.pageCount) {
-            this.page += 1;
-            this.displayPage();
+        if(this.state.pageNumber < this.props.pageCount) {
+            this.setState({pageNumber: this.state.pageNumber + 1});
         }
     }
+
+    onFitChange(reader, wrapper) {
+        this.setState({readerClass: reader, wrapperClass: wrapper});
+    }
+
+    render() {
+        return (
+            <div id="reader">
+                <ReaderNavbar onPrevious={this.previousPage} onNext={this.nextPage} onFitChange={this.onFitChange} />
+                <div id="reader-wrapper" ref="reader-wrapper" className={this.state.wrapperClass} >
+                    <ComicPage comic={this.props.comic} page={this.state.pageNumber} readerClass={this.state.readerClass} />
+                </div>
+            </div>
+        )
+    }
 }
-
-let reader = null;
-export function readComic(comicId, pageCount) {
-    reader = new ComicReader(comicId, pageCount);
-    reader.setup();
-}
-
-

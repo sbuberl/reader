@@ -4,10 +4,10 @@ module.exports = {
         // comic_reader: './js/comic_reader.js',
         // epub_reader: './js/epub_reader.js',
         //pdf_reader: './js/pdf_reader.js'
-        app: './js/react/app.js'
+        app: './js/app.js'
     },
     output: {
-        path: path.join(__dirname, "js/react"),
+        path: path.join(__dirname, "static/js/"),
         filename: '[name]_bundle.js',
     },
     module: {
@@ -15,7 +15,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 include: [
-                    path.join(__dirname, "js/react"),
+                    path.join(__dirname, "js/"),
                 ],
                 loader: 'babel-loader'
             }

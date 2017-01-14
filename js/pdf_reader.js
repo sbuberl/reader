@@ -1,83 +1,66 @@
-import { Reader } from "./reader";
+import React from 'react';
+import PDF from 'react-pdf-js';
 
-let reader = null;
-const scale = 0.8;
+export default class MyPdfViewer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.onDocumentComplete = this.onDocumentComplete.bind(this);
+    this.onPageComplete = this.onPageComplete.bind(this);
+    this.handlePrevious = this.handlePrevious.bind(this);
+    this.handleNext = this.handleNext.bind(this);
 
-export class PdfReader extends Reader {
-    constructor(pdfFileId) {
-        super("#pdf-canvas", "#pdf-holder");
-        let canvas = this.container[0];
-        this.context = canvas.getContext('2d');
-        this.pageNum = 1;
-        this.pageNumPending = null;
-        this.pageRendering = false;
-        let self = this;
-        PDFJS.getDocument('/file/' + pdfFileId).then(function (pdfDoc_) {
-            self.pdfDoc = pdfDoc_;
-            $('#page_count').text(pdfDoc_.numPages);
+     this.state = {
+        page: 1,
+        pages: null
+    };
 
-            // Initial/first page rendering
-            self.renderPage(self.pageNum);
-        });
+  }
+
+  onDocumentComplete(pages) {
+    this.setState({ page: 1, pages: pages });
+  }
+
+  onPageComplete(page) {
+    this.setState({ page });
+  }
+
+  handlePrevious() {
+    this.setState({ page: this.state.page - 1 });
+  }
+
+  handleNext() {
+    this.setState({ page: this.state.page + 1 });
+  }
+
+  renderPagination(page, pages) {
+    let previousButton = <li className="previous" onClick={this.handlePrevious}><a href="#"><i className="fa fa-arrow-left"></i> Previous</a></li>;
+    if (page === 1) {
+      previousButton = <li className="previous disabled"><a href="#"><i className="fa fa-arrow-left"></i> Previous</a></li>;
     }
-
-    renderPage(num) {
-        this.pageRendering = true;
-        // Using promise to fetch the page
-        let self = this;
-        this.pdfDoc.getPage(num).then(function (page) {
-            let viewport = page.getViewport(scale);
-            self.container.height = viewport.height;
-            self.container.width = viewport.width;
-
-            // Render PDF page into canvas context
-            let renderContext = {
-                canvasContext: self.context,
-                viewport: viewport
-            };
-            let renderTask = page.render(renderContext);
-
-            // Wait for rendering to finish
-            renderTask.promise.then(function () {
-                self.pageRendering = false;
-                if (self.pageNumPending !== null) {
-                    // New page rendering is pending
-                    self.renderPage(self.pageNumPending);
-                    self.pageNumPending = null;
-                }
-            });
-        });
-
-        // Update page counters
-        $('#page_num').text(this.pageNum);
+    let nextButton = <li className="next" onClick={this.handleNext}><a href="#">Next <i className="fa fa-arrow-right"></i></a></li>;
+    if (page === pages) {
+      nextButton = <li className="next disabled"><a href="#">Next <i className="fa fa-arrow-right"></i></a></li>;
     }
+    return (
+      <nav>
+        <ul className="pager">
+          {previousButton}
+          {nextButton}
+        </ul>
+      </nav>
+      );
+  }
 
-    queueRenderPage(num) {
-        if (this.pageRendering) {
-            this.pageNumPending = num;
-        } else {
-            this.renderPage(num);
-        }
+  render() {
+    let pagination = null;
+    if (this.state.pages) {
+      pagination = this.renderPagination(this.state.page, this.state.pages);
     }
-
-    prevPage() {
-        if (this.pageNum <= 1) {
-            return;
-        }
-        this.pageNum;
-        this.queueRenderPage(this.pageNum);
-    }
-
-    nextPage() {
-        if (this.pageNum >= this.pdfDoc.numPages) {
-            return;
-        }
-        this.pageNum++;
-        this.queueRenderPage(this.pageNum);
-    }
-}
-
-export function readPdf(pdfFileId) {
-    reader = new PdfReader(pdfFileId);
-    reader.setup();
+    return (
+      <div>
+        <PDF file="/file/74" onDocumentComplete={this.onDocumentComplete} onPageComplete={this.onPageComplete} page={this.state.page} />
+        {pagination}
+      </div>
+    )
+  }
 }
