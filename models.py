@@ -15,13 +15,17 @@ class File(db.Model):
 
 
 class Document(db.Model):
-    __abstract__ = True
+    __tablename__ = "documents"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     type = db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE), nullable=False)
     author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
+    __mapper_args__ = {
+        'polymorphic_identity': 'documents',
+        'polymorphic_on': type
+    }
 
     @declared_attr
     def cover_id(cls):
@@ -33,7 +37,9 @@ class Document(db.Model):
 
 
 class Comic(Document):
-    __tablename__ = "comics"
+    __tablename__ = 'comics'
+    __mapper_args__ = {'polymorphic_identity': COMIC_TYPE}
+    id = db.Column(db.Integer, db.ForeignKey('documents.id'), primary_key=True)
     series = db.Column(db.String)
     issue = db.Column(db.Integer)
     pages = db.relationship("ComicPage", back_populates="comic")
@@ -55,11 +61,15 @@ class ComicPage(db.Model):
 
 
 class Epub(Document):
-    __tablename__ = "epubs"
+    __tablename__ = 'epubs'
+    __mapper_args__ = {'polymorphic_identity': EPUB_TYPE}
+    id = db.Column(db.Integer, db.ForeignKey('documents.id'), primary_key=True)
     extracted_path = db.Column(db.String, nullable=False)
 
 
 class Pdf(Document):
-    __tablename__ = "pdf"
+    __tablename__ = 'pdfs'
+    __mapper_args__ = {'polymorphic_identity': PDF_TYPE}
+    id = db.Column(db.Integer, db.ForeignKey('documents.id'), primary_key=True)
 
 
