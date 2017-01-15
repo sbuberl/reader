@@ -37,7 +37,7 @@ class DocumentListResource(Resource):
             document = handler.handle_file(basename, uploaded_file_path)
             db.session.commit()
         json = self.schema.dump(document)
-        return jsonify({"document": json.data}), 200
+        return make_response(jsonify({"document": json.data}), 200)
 
 
 class DocumentResource(Resource):
@@ -47,7 +47,7 @@ class DocumentResource(Resource):
 
     def _serialize(self, document):
         json = self.schema.dump(document)
-        return jsonify({"document": json.data}), 200
+        return make_response(jsonify({"document": json.data}), 200)
 
     def get(self, doc_id):
         document = self.model_class.query.get(doc_id)

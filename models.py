@@ -21,6 +21,8 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     type = db.Column(db.Enum(COMIC_TYPE, EPUB_TYPE, PDF_TYPE), nullable=False)
+    file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
+    cover_id = db.Column(db.Integer, db.ForeignKey('files.id'))
     author = db.Column(db.String)
     publisher = db.Column(db.String)
     release_date = db.Column(db.DateTime)
@@ -28,14 +30,6 @@ class Document(db.Model):
         'polymorphic_identity': 'documents',
         'polymorphic_on': type
     }
-
-    @declared_attr
-    def cover_id(cls):
-        return db.Column(db.Integer, db.ForeignKey('files.id'))
-
-    @declared_attr
-    def file_id(cls):
-        return db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
 
 
 class Comic(Document):
@@ -78,6 +72,7 @@ class Pdf(Document):
 class DocumentSchema(ModelSchema):
     class Meta:
         model = Document
+        include_fk = True
 
 
 class FileSchema(ModelSchema):
@@ -93,6 +88,7 @@ class ComicSchema(ModelSchema):
 class ComicPageSchema(ModelSchema):
     class Meta:
         model = ComicPage
+        include_fk = True
 
 
 class EpubSchema(ModelSchema):
