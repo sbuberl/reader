@@ -1,5 +1,7 @@
+from api import ComicResource, DocumentResource, DocumentListResource
 from constants import *
 from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
+from flask_restful import Api
 from forms import UploadForm, ComicMetadataForm, DocumentMetadataForm
 from handlers import get_handler
 from models import db, File, ComicPage, Comic, Pdf, Epub
@@ -16,12 +18,18 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
+api = Api(app)
+
 if not os.path.isdir(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 if not os.path.isdir(LIBRARY_FOLDER):
     os.makedirs(LIBRARY_FOLDER)
 if not os.path.isdir(THUMBNAILS):
     os.makedirs(THUMBNAILS)
+
+api.add_resource(DocumentListResource, '/api/documents')
+api.add_resource(DocumentResource, '/api/documents/<int:doc_id>')
+api.add_resource(ComicResource, '/api/comics/<int:comic_id>')
 
 
 @app.route('/')

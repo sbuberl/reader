@@ -1,7 +1,9 @@
 epub
 Flask
+Flask-Restful
 Flask-SQLAlchemy
 Flask-WTF
+marshmallow-sqlalchemy
 Pillow
 PyPDF2
 python-dateutil

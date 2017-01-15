@@ -1,3 +1,5 @@
+from marshmallow_sqlalchemy import ModelSchema
+
 from constants import COMIC_TYPE, EPUB_TYPE, PDF_TYPE, IMAGE_TYPE
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declared_attr
@@ -72,4 +74,33 @@ class Pdf(Document):
     __mapper_args__ = {'polymorphic_identity': PDF_TYPE}
     id = db.Column(db.Integer, db.ForeignKey('documents.id'), primary_key=True)
 
+
+class DocumentSchema(ModelSchema):
+    class Meta:
+        model = Document
+
+
+class FileSchema(ModelSchema):
+    class Meta:
+        model = File
+
+
+class ComicSchema(ModelSchema):
+    class Meta:
+        model = Comic
+
+
+class ComicPageSchema(ModelSchema):
+    class Meta:
+        model = ComicPage
+
+
+class EpubSchema(ModelSchema):
+    class Meta:
+        model = Epub
+
+
+class PdfSchema(ModelSchema):
+    class Meta:
+        model = Pdf
 
