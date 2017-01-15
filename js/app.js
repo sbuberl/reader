@@ -1,10 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import ReaderLayout from './reader_layout';
-import PdfReader from './pdf_reader';
-
+import Library from './library';
 
 ReactDOM.render(
-    <PdfReader />,
+    <Library />,
     document.getElementById('example')
 );

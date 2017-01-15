@@ -1,5 +1,4 @@
 import React from 'react';
-import ComicPage from './comic_page';
 import {ReactReader} from 'react-reader'
 
 export default class EpubReader extends React.Component {

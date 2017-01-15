@@ -7,7 +7,7 @@ export default class ComicPage extends React.Component {
 
     render() {
         return (
-            <img id="reader-content" ref="reader-content" src={"http://localhost:5000/comic/" + this.props.comic + "/page/" + this.props.page} className={this.props.readerClass} />
+            <img id="reader-content" ref="reader-content" src={"/comic/" + this.props.comic + "/page/" + this.props.page} className={this.props.readerClass} />
         )
     }
 }

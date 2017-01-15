@@ -1,7 +1,7 @@
 import React from 'react';
 import PDF from 'react-pdf-js';
 
-export default class MyPdfViewer extends React.Component {
+export default class PdfReader extends React.Component {
   constructor(props) {
     super(props);
     this.onDocumentComplete = this.onDocumentComplete.bind(this);

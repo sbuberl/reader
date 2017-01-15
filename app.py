@@ -34,6 +34,7 @@ api.add_resource(ComicResource, '/api/comics/<int:comic_id>')
 
 @app.route('/')
 def index():
+    return render_template('react_index.html')
     comics = db.session.query(Comic.id, Comic.name, Comic.type, Comic.cover_id)
     pdfs = db.session.query(Pdf.id, Pdf.name, Pdf.type, Pdf.cover_id)
     epubs = db.session.query(Epub.id, Epub.name, Epub.type, Epub.cover_id)
