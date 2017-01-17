@@ -1,4 +1,4 @@
-from api import ComicResource, DocumentResource, DocumentListResource
+from api import ComicResource, DocumentResource, DocumentListResource, FileResource
 from constants import *
 from flask import Flask, render_template, redirect, url_for, send_file, send_from_directory
 from flask_restful import Api
@@ -27,6 +27,7 @@ if not os.path.isdir(LIBRARY_FOLDER):
 if not os.path.isdir(THUMBNAILS):
     os.makedirs(THUMBNAILS)
 
+api.add_resource(FileResource, '/api/files/<int:file_id>')
 api.add_resource(DocumentListResource, '/api/documents')
 api.add_resource(DocumentResource, '/api/documents/<int:doc_id>')
 api.add_resource(ComicResource, '/api/comics/<int:comic_id>')
@@ -35,12 +36,16 @@ api.add_resource(ComicResource, '/api/comics/<int:comic_id>')
 @app.route('/')
 def index():
     return render_template('react_index.html')
+
+
+@app.route('/library')
+def library():
     comics = db.session.query(Comic.id, Comic.name, Comic.type, Comic.cover_id)
     pdfs = db.session.query(Pdf.id, Pdf.name, Pdf.type, Pdf.cover_id)
     epubs = db.session.query(Epub.id, Epub.name, Epub.type, Epub.cover_id)
     docs = comics.union(pdfs).union(epubs).all()
     docs.sort(key=lambda x: x.name)
-    return render_template('index.html', documents=docs)
+    return render_template('index.html', docs=docs)
 
 
 @app.route('/file/<int:file_id>')
