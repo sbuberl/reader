@@ -45,7 +45,7 @@ export default class Library extends React.Component {
                             <p>{ document.name }</p>
                         </Link>
                         <p>
-                            <a href={"/metadata/" + document.type + "/" + document.id}><span className="glyphicon glyphicon-edit"></span> Information</a>
+                            <Link to={"/metadata/" + document.id}><span className="glyphicon glyphicon-edit"></span> Information</Link>
                             <a href={"/download/" + document.type + "/" + document.id}><span className="glyphicon glyphicon-download-alt"></span> Download</a>
                         </p>
                     </div>
