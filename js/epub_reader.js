@@ -3,7 +3,7 @@ import {ReactReader} from 'react-reader'
 
 export default class EpubReader extends React.Component {
    constructor (props) {
-    super(props)
+    super(props);
     this.state = {
       fullscreen: false
     }

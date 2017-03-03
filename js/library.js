@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router';
 import 'whatwg-fetch';
+import Store from './store';
 
 export default class Library extends React.Component {
     constructor (props) {
-        super(props)
+        super(props);
+
+        this.docStore = new Store("documents");
 
         this.state = {
           documents: []
@@ -17,7 +20,9 @@ export default class Library extends React.Component {
             .then(function(response) {
                 return response.json()
             }).then(function(json) {
-                self.setState({ documents: json.documents });
+                const docs = json.documents;
+                self.docStore.items = docs;
+                self.setState({ documents: docs });
             }).catch(function(ex) {
                 console.log('parsing failed', ex)
             });

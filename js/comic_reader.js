@@ -38,7 +38,7 @@ export default class ComicReader extends React.Component {
             <div id="reader">
                 <ReaderNavbar onPrevious={this.previousPage} onNext={this.nextPage} onFitChange={this.onFitChange} />
                 <div id="reader-wrapper" ref="reader-wrapper" className={this.state.wrapperClass} >
-                    <ComicPage comic={this.props.comic} page={this.state.pageNumber} readerClass={this.state.readerClass} />
+                    <ComicPage comic={this.props.params.comic} page={this.state.pageNumber} readerClass={this.state.readerClass} />
                 </div>
             </div>
         )
